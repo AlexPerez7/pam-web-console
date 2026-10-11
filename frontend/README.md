@@ -1,6 +1,6 @@
 # frontend — SPA PAM Web Console
 
-React 18 + TypeScript + Vite + **Tailwind CSS v4** + **shadcn/ui** (primitivas
+React 19 + TypeScript + Vite + **Tailwind CSS v4** + **shadcn/ui** (primitivas
 Radix) + **lucide-react** + **TanStack Query**.
 
 ## Design system

@@ -1,24 +1,40 @@
+<div align="center">
+
 # PAM Web Console
 
 **Consola web multi-tenant para operar CyberArk Privilege Cloud.**
-Inventario, gestión y auditoría de accesos privilegiados de todos los
-clientes desde un solo panel, con control de acceso por rol, doble
-aprobación en las operaciones críticas y trazabilidad completa de cada
-acción.
 
-| | |
-|---|---|
-| **Para quién** | El equipo PAM de un MSP (proveedor de servicios gestionados) que administra los tenants de CyberArk de varios clientes |
-| **Alcance** | CyberArk Privilege Cloud / ISPSS |
-| **Stack** | Python 3.12 · FastAPI · SQLAlchemy 2 · PostgreSQL · Redis/ARQ · React 18 · TypeScript · Tailwind v4 · shadcn/ui |
-| **Despliegue** | Docker Compose on-prem, sin dependencias de nube |
-| **Demo en vivo** | **[alexperez7.github.io/pam-web-console](https://alexperez7.github.io/pam-web-console/)** (datos ficticios, solo lectura) |
+Inventario, gestión y auditoría de accesos privilegiados de todos los clientes
+desde un solo panel, con control de acceso por rol, doble aprobación en las
+operaciones críticas y trazabilidad completa de cada acción.
 
+[![CI](https://github.com/AlexPerez7/pam-web-console/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexPerez7/pam-web-console/actions/workflows/ci.yml)
+[![Demo](https://github.com/AlexPerez7/pam-web-console/actions/workflows/pages.yml/badge.svg)](https://alexperez7.github.io/pam-web-console/)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-async-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker_Compose-on--prem-2496ED?logo=docker&logoColor=white)
+
+**[Ver la demo en vivo »](https://alexperez7.github.io/pam-web-console/)**
+&nbsp;·&nbsp; [Capturas](#capturas)
+&nbsp;·&nbsp; [Probar con Docker](#probar-la-demo)
+&nbsp;·&nbsp; [Seguridad](#seguridad)
+&nbsp;·&nbsp; [Arquitectura](#arquitectura)
+
+<br>
+
+<img src="docs/screenshots/dashboard.png" alt="Dashboard de un tenant: total de cuentas, compliance, cuentas en error, gestión automática, sesiones activas y salud de componentes" width="100%">
+
+</div>
+
+> [!NOTE]
 > Proyecto real, desarrollado y usado en producción por el equipo PAM de un
-> MSP. Esta es la versión pública: los datos de clientes, la
-> infraestructura interna y las integraciones propias de la empresa se
-> reemplazaron por datos ficticios, y se agregó un **modo demo** para
-> poder probarla sin un tenant de CyberArk.
+> MSP. Esta es la versión pública: los datos de clientes, la infraestructura
+> interna y las integraciones propias de la empresa se reemplazaron por datos
+> ficticios, y se agregó un **modo demo** para probarla sin un tenant de
+> CyberArk.
 
 ## El problema
 
@@ -39,14 +55,57 @@ borrar la cuenta privilegiada de un cliente en producción. Todo el diseño
 gira alrededor de contener ese radio de impacto (ver
 [Principios de diseño](#principios-de-diseño)).
 
-**Contenido:**
-[Funcionalidades](#funcionalidades) ·
-[Probar la demo](#probar-la-demo) ·
-[Principios de diseño](#principios-de-diseño) ·
-[Seguridad](#seguridad--controles-aplicados) ·
-[Arquitectura](#arquitectura) ·
-[Desarrollo](#desarrollo) ·
-[Documentación](#documentación)
+| | |
+|---|---|
+| **Para quién** | El equipo PAM de un MSP (proveedor de servicios gestionados) que administra los tenants de CyberArk de varios clientes |
+| **Alcance** | CyberArk Privilege Cloud / ISPSS (PVWA, Identity, Connector Management, SIA, Remote Access) |
+| **Stack** | Python 3.12 · FastAPI · SQLAlchemy 2 · PostgreSQL · Redis/ARQ · React 19 · TypeScript · Tailwind v4 · shadcn/ui |
+| **Despliegue** | Docker Compose on-prem, sin dependencias de nube |
+
+## Capturas
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/system-health.png" alt="System Health: estado de Vault, CPM y PSM de todos los tenants">
+      <p align="center"><b>System Health</b><br><sub>Vault, CPM y PSM de todos los tenants en una sola vista</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/search.png" alt="Búsqueda cross-tenant de cuentas">
+      <p align="center"><b>Búsqueda cross-tenant</b><br><sub>Cuentas, safes, plataformas, usuarios y grupos de todos los clientes a la vez</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/accounts.png" alt="Inventario de cuentas con filtros por estado, safe y fecha">
+      <p align="center"><b>Inventario de cuentas</b><br><sub>Filtros server-side, selección múltiple y edición en lote</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/account-detail.png" alt="Panel de detalle de una cuenta con estado de la contraseña y actividad reciente">
+      <p align="center"><b>Detalle de cuenta</b><br><sub>Estado frente a la política de rotación, acciones del CPM y actividad</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/compliance.png" alt="Compliance: cuentas desglosadas por motivo de incumplimiento">
+      <p align="center"><b>Compliance</b><br><sub>Desglose por motivo, cruzado con la política de cada plataforma</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/report.png" alt="Catálogo de reportes con el inventario detallado de cuentas ejecutado">
+      <p align="center"><b>Reportes</b><br><sub>Catálogo ejecutable con export CSV y Excel</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/audit.png" alt="Auditoría: registro de acciones de los operadores con verificación de integridad">
+      <p align="center"><b>Auditoría</b><br><sub>Log append-only con hash encadenado y verificación de integridad</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/safes.png" alt="Listado de safes de un tenant">
+      <p align="center"><b>Safes</b><br><sub>Alta, edición y miembros, con export CSV</sub></p>
+    </td>
+  </tr>
+</table>
 
 ## Funcionalidades
 
@@ -134,14 +193,44 @@ en cualquier app de autenticación.
 6. **Mínimo privilegio** del service account de cada tenant.
 7. **Tenant de laboratorio** antes de cualquier escritura contra un cliente.
 
-## Seguridad — controles aplicados
+### Ciclo de una escritura
 
-Registro vivo de qué controles de seguridad tiene el proyecto hoy. Detalle,
-diseño y registro cronológico de parches en
-[`docs/security.md`](docs/security.md); modelo de amenaza y checklist
-completo en [`docs/PLAN.md`](docs/PLAN.md) §3 y §10.
+```mermaid
+flowchart LR
+    A[Operador pide<br>el cambio] --> B{¿Rol mínimo<br>del endpoint?}
+    B -- no --> X[403 + auditado]
+    B -- sí --> C[dry-run + diff<br>+ motivo]
+    C --> D{¿Operación<br>destructiva?}
+    D -- no --> F[Ejecuta en CyberArk]
+    D -- sí --> E[Frase de confirmación<br>+ aprobación de<br>otro operador]
+    E --> F
+    F --> G[(Audit log<br>hash encadenado)]
+```
 
-Estado: **✅** implementado · **🔶** parcial · **⏳** pendiente (fase/decisión)
+Cada paso —el intento, el dry-run, la solicitud de aprobación y la
+ejecución— queda en el audit log con el operador real, el tenant, el
+objeto afectado y el `before`/`after`.
+
+## Seguridad
+
+Registro vivo de los controles que tiene el proyecto hoy. Detalle, diseño y
+registro cronológico de parches en [`docs/security.md`](docs/security.md);
+modelo de amenaza y checklist completo en [`docs/PLAN.md`](docs/PLAN.md) §3
+y §10.
+
+| Área | Controles principales |
+|---|---|
+| **Identidad** | Argon2id · TOTP obligatorio con anti-replay · JWT de 15 min en memoria + refresh rotativo de un solo uso en cookie `HttpOnly` · anti-fuerza-bruta por usuario e IP |
+| **Autorización** | RBAC deny-by-default, scopeado por tenant (`viewer < operator < approver < tenant_admin < platform_admin`) |
+| **Auditoría** | Log append-only con `sha256` encadenado + trigger de Postgres que bloquea `UPDATE`/`DELETE` |
+| **Multi-tenant** | Un cliente de CyberArk nuevo por tenant y por request · caché particionada, sin secretos |
+| **Secretos** | Credenciales cifradas con `age`, fuera del repo · backups de credenciales con un keypair propio |
+| **Radio de impacto** | Dry-run + diff + motivo · rate-limit y circuit breaker de escrituras · confirmación reforzada · doble aprobación · backup cifrado antes de borrar |
+| **Red** | Nunca expuesto a internet · CSP estricta, HSTS, `X-Frame-Options: DENY` · `/docs` deshabilitado fuera de `dev` · contenedor no-root |
+| **CI** | gitleaks · `pip-audit` · `npm audit` · ruff con reglas de seguridad (`S`) · mypy · axe-core (0 violaciones WCAG 2.1 AA) |
+
+<details>
+<summary><b>Checklist completo de controles</b> (✅ implementado · 🔶 parcial · ⏳ pendiente)</summary>
 
 ### Identidad y acceso de operadores
 
@@ -201,8 +290,8 @@ Estado: **✅** implementado · **🔶** parcial · **⏳** pendiente (fase/deci
 ### Custodia de secretos
 
 - ✅ Credenciales de los service accounts **fuera del repo y fuera del disco
-  de PAM Web Console**: `secrets/secrets.age` (cifrado con `age`), existe **sólo en el
-  server**. `seed/tenants.json` lleva sólo URLs + `secret_ref`.
+  de PAM Web Console**: `secrets/secrets.age` (cifrado con `age`), existe
+  **sólo en el server**. `seed/tenants.json` lleva sólo URLs + `secret_ref`.
 - ✅ Los **backups de cuentas/credenciales** se cifran con un keypair `age`
   propio, separado del secret store de tenants.
 - ✅ **Guard de arranque**: fuera de `dev`, la API no arranca si
@@ -268,38 +357,38 @@ Estado: **✅** implementado · **🔶** parcial · **⏳** pendiente (fase/deci
 - ⏳ Revisión / aprobación de seguridad de cada cliente antes de conectar su
   tenant con permisos de escritura.
 
+</details>
+
 ## Arquitectura
 
-```
- Navegador ── HTTPS ──► nginx (SPA React + proxy /api)
-                            │
-                            ▼
-                    API FastAPI (async) ──────────► Privilege Cloud de cada tenant
-                    ├─ auth (Argon2 + TOTP + JWT)    (PVWA, Identity, Connector
-                    ├─ RBAC por tenant                Management, SIA, Alero)
-                    ├─ writeop: dry-run, diff,
-                    │  rate-limit, circuit breaker
-                    ├─ audit log (hash encadenado)
-                    └─ secret store (age)
-                            │
-              ┌─────────────┼──────────────┐
-              ▼             ▼              ▼
-         PostgreSQL       Redis        Worker ARQ
-     (audit, RBAC,     (caché, cola)  (sync nocturno,
-      snapshots)                       reportes, alertas)
+```mermaid
+flowchart TB
+    U([Navegador]) -- HTTPS --> N[nginx · SPA React + proxy /api]
+    N --> API[<b>API FastAPI async</b><br>Auth Argon2 + TOTP + JWT · RBAC por tenant<br>writeop: dry-run · diff · rate-limit · circuit breaker<br>audit log encadenado · secret store age]
+
+    API --> PG[(PostgreSQL<br>audit · RBAC · snapshots)]
+    API --> R[(Redis<br>caché · cola)]
+    R --> W[Worker ARQ<br>sync · reportes · alertas]
+    W --> PG
+    API -- un cliente nuevo<br>por tenant y request --> CA[[Privilege Cloud de cada tenant<br>PVWA · Identity · Connector Mgmt · SIA · Alero]]
+    W --> CA
+    W -. alertas .-> T([Microsoft Teams])
 ```
 
 | Capa | Elección |
 |---|---|
 | Backend | Python 3.12 + FastAPI (async), Pydantic v2, SQLAlchemy 2.0 + Alembic |
-| Cliente CyberArk | módulo propio async (httpx): auth OAuth2 de ISPSS, retry con backoff, paginación, semáforo de concurrencia, errores tipados |
-| Frontend | React 18 + TypeScript + Vite + Tailwind v4 + shadcn/ui + TanStack Query/Table |
+| Cliente CyberArk | Módulo propio async (httpx): auth OAuth2 de ISPSS, retry con backoff, paginación, semáforo de concurrencia, errores tipados |
+| Frontend | React 19 + TypeScript + Vite + Tailwind v4 + shadcn/ui + TanStack Query/Table |
 | Base de datos | PostgreSQL 16 (trigger anti `UPDATE`/`DELETE` en el audit log) |
 | Jobs | ARQ + Redis |
-| Secretos | archivo cifrado con `age`, con la interfaz lista para migrar a CyberArk CCP / OpenBao |
+| Secretos | Archivo cifrado con `age`, con la interfaz lista para migrar a CyberArk CCP / OpenBao |
 | Deploy | Docker Compose + systemd, on-prem |
 
 Justificación del stack y alternativas descartadas: [`docs/PLAN.md`](docs/PLAN.md) §4.
+
+<details>
+<summary><b>Estructura del repositorio</b></summary>
 
 ```
 backend/          API FastAPI async + SQLAlchemy 2 + Alembic
@@ -316,11 +405,13 @@ backend/          API FastAPI async + SQLAlchemy 2 + Alembic
   tools/scpr_decode decodificador C++ del códec de grabaciones de PSM
 frontend/         SPA React + TypeScript
 infra/            unidad systemd + script de deploy con verificaciones
-docs/             PLAN · ARCHITECTURE · security · specs/
+docs/             PLAN · ARCHITECTURE · security · specs/ · screenshots/
 ```
 
 Árbol completo con notas de diseño por módulo:
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+</details>
 
 ## Desarrollo
 
@@ -362,4 +453,6 @@ tenants reales.
 
 ## Autor
 
-Alex Pérez Argomedo — diseño, desarrollo y operación del proyecto.
+**Alex Pérez Argomedo** — diseño, desarrollo y operación del proyecto.
+
+[![GitHub](https://img.shields.io/badge/GitHub-AlexPerez7-181717?logo=github)](https://github.com/AlexPerez7)

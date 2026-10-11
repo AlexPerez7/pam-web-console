@@ -1336,7 +1336,7 @@ secrets/              secret store real (age.key + secrets.age) — NO en git,
                       backups de cuentas borradas (Fase 3, `account.delete`),
                       separado de `age.key` — comprometer uno no compromete
                       el otro.
-frontend/             SPA React 18 + TS + Vite + Tailwind v4 + shadcn/ui
+frontend/             SPA React 19 + TS + Vite + Tailwind v4 + shadcn/ui
                       (primitivas Radix) + lucide-react + TanStack
                       Query/Table/Virtual.
   src/index.css         Tailwind + tokens del design system propio

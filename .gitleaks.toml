@@ -1,0 +1,30 @@
+# Config de gitleaks para PAM Web Console. Extiende las reglas por defecto.
+# Ver docs/specs/hardening-pre-escritura.md (R1).
+
+title = "PAM Web Console gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Rutas y valores que NO son secretos reales"
+
+paths = [
+  # registro de tenants: sólo URLs + secret_ref, cero credenciales
+  '''seed/tenants\.json''',
+  # plantillas
+  '''.*\.example$''',
+  '''.*\.example\..*''',
+  # specs y docs: nombran campos como client_secret, no valores
+  '''docs/.*\.md$''',
+  # fixtures de test con secretos obviamente falsos
+  '''backend/tests/.*''',
+]
+
+regexes = [
+  # defaults de desarrollo, bloqueados en prod por el guard de arranque (R5)
+  '''dev-only-change-me''',
+  '''pam-dummy-password''',
+  '''test-secret-key-not-for-prod''',
+  '''cambiar-esto[a-z-]*''',
+]

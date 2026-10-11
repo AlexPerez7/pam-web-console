@@ -1,0 +1,143 @@
+    <div class="grid" style="grid-template-columns: 1fr;">
+      <div class="card kpi-hero-row" style="padding: 0;">
+        <div class="kpi-hero">
+          <div class="value {{ 'crit' if cpm_errors.accounts_with_failed_status else 'ok' }}">{{ cpm_errors.accounts_with_failed_status }}</div>
+          <div class="label">Cuentas con fallo CPM</div>
+          <div class="delta">status "Failure"</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value ok">{{ account_activity.used_pct }}%</div>
+          <div class="label">Cuentas con uso (30d)</div>
+          <div class="delta">{{ account_activity.unused }} sin uso</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'warn' if concurrent_sessions.off_hours_pct >= 30 else 'ok' }}">{{ concurrent_sessions.off_hours_pct }}%</div>
+          <div class="label">Sesiones fuera de horario</div>
+          <div class="delta">{{ concurrent_sessions.off_hours_count }} sesiones</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'warn' if concurrent_sessions.long_session_count else 'ok' }}">{{ concurrent_sessions.long_session_count }}</div>
+          <div class="label">Sesiones &gt;= {{ concurrent_sessions.long_session_hours }}h</div>
+          <div class="delta">Ver detalle en Sesiones</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="section-label">Cumplimiento y errores</div>
+
+      <div class="card">
+        <h2>Errores de CPM (vía secretManagement.status)</h2>
+        <div class="kpi-row">
+          <div class="kpi"><div class="value crit">{{ cpm_errors.accounts_with_failed_status }}</div><div class="label">Cuentas con status "Failure"</div></div>
+          <div class="kpi"><div class="value warn">{{ cpm_errors.active_retry }}</div><div class="label">Gestión automática activa (en reintento)</div></div>
+          <div class="kpi"><div class="value">{{ cpm_errors.given_up }}</div><div class="label">Gestión automática deshabilitada (tras agotar reintentos)</div></div>
+          <div class="kpi"><div class="value {{ 'warn' if compliance_breakdown.categories.DisableByCPM else 'ok' }}">{{ compliance_breakdown.categories.DisableByCPM }}</div><div class="label">Rotación deshabilitada por el CPM</div></div>
+          <div class="kpi"><div class="value">{{ compliance_breakdown.categories.DisableByUser }}</div><div class="label">Gestión automática deshabilitada por un operador</div></div>
+        </div>
+        <p class="card-subtitle">Motivo de deshabilitación (manualManagementReason)</p>
+        <canvas id="cpmFailureReasonChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Estado de Cumplimiento (desglose aproximado)</h2>
+        <canvas id="complianceBreakdownChart"></canvas>
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Estado de Cumplimiento (por plataforma)</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="compliancePlatformSearch" class="table-search" placeholder="Buscar por plataforma...">
+            <button id="compliancePlatformExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="compliancePlatformTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Nombre de Plataforma</th>
+                <th data-type="text">AutoChange</th>
+                <th data-type="num">Cuentas</th>
+                <th data-type="num">Compliant</th>
+                <th data-type="num">InactivePlatform</th>
+                <th data-type="num">InvalidPlatform</th>
+                <th data-type="num">LastChangeExp</th>
+                <th data-type="num">DisableByUser</th>
+                <th data-type="num">DisableByCPM</th>
+                <th data-type="num">NoCPMOnSafe</th>
+                <th data-type="num" title="secretManagement.status = 'failed' (igual que el rojo en PVWA)">CPMFailure</th>
+                <th data-type="num">NeverManaged</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in compliance_by_platform %}
+              <tr>
+                <td>{{ r.platform_name }}</td>
+                <td>{{ r.auto_change }}</td>
+                <td>{{ r.accounts }}</td>
+                <td class="ok">{{ r.compliant }}</td>
+                <td>{{ r.inactive_platform }}</td>
+                <td>{{ r.invalid_platform }}</td>
+                <td>{{ r.last_change_exp }}</td>
+                <td>{{ r.disable_by_user }}</td>
+                <td>{{ r.disable_by_cpm }}</td>
+                <td>{{ r.no_cpm_on_safe }}</td>
+                <td>{{ r.cpm_failure }}</td>
+                <td>{{ r.never_managed }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="section-label">Actividad de sesiones (resumen)</div>
+
+      <div class="card">
+        <h2>Resumen de actividad</h2>
+        <div class="kpi-row">
+          <div class="kpi"><div class="value">{{ account_activity.total_known }}</div><div class="label">Cuentas relevadas</div></div>
+          <div class="kpi"><div class="value ok">{{ account_activity.used_pct }}%</div><div class="label">Con uso ({{ account_activity.window_days }}d)</div></div>
+          <div class="kpi"><div class="value {{ 'crit' if account_activity.unused else 'ok' }}">{{ account_activity.unused }}</div><div class="label">Sin uso ({{ account_activity.window_days }}d)</div></div>
+        </div>
+        {% if account_activity.total_known < account_activity.total %}
+        <p class="muted">No se pudo consultar la actividad de {{ account_activity.total - account_activity.total_known }} cuenta(s) (quedan fuera de este cálculo).</p>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <h2>Sesiones PSM concurrentes</h2>
+        <div class="kpi-row">
+          <div class="kpi"><div class="value">{{ concurrent_sessions.max_concurrent }}</div><div class="label">Pico concurrente ({{ concurrent_sessions.window_days }}d)</div></div>
+          <div class="kpi"><div class="value" title="Sesiones PSM con inicio y fin reconstruidos a partir del evento &quot;PSM Disconnect&quot; (que trae la duración exacta). Sesiones que quedaron abiertas o sin ese evento en el historial no se pueden reconstruir y no entran en este número ni en el cálculo de concurrencia.">{{ concurrent_sessions.sessions_counted }}</div><div class="label">Sesiones completas relevadas</div></div>
+        </div>
+        {% if concurrent_sessions.max_concurrent_at %}
+        <p class="muted">Pico alcanzado el {{ concurrent_sessions.max_concurrent_at }}.</p>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <h2>Sesiones fuera de horario laboral</h2>
+        <div class="kpi-row">
+          <div class="kpi"><div class="value {{ 'warn' if concurrent_sessions.off_hours_pct >= 30 else 'ok' }}">{{ concurrent_sessions.off_hours_pct }}%</div><div class="label">Fuera de horario</div></div>
+          <div class="kpi"><div class="value">{{ concurrent_sessions.off_hours_count }}</div><div class="label">Sesiones</div></div>
+        </div>
+        <p class="muted" title="Fuera de lunes a viernes 08:00-18:00 UTC, calculado con la hora de inicio de cada sesión. No hay timezone configurada por cliente todavía, así que en tenants fuera de UTC hay que leerlo con ese corrimiento en mente.">Horario laboral asumido: Lun-Vie 08:00-18:00 UTC.</p>
+      </div>
+
+      <div class="card">
+        <h2>Duración de sesión</h2>
+        <div class="kpi-row">
+          <div class="kpi"><div class="value">{{ concurrent_sessions.avg_duration_minutes }}m</div><div class="label">Promedio</div></div>
+          <div class="kpi"><div class="value">{{ concurrent_sessions.median_duration_minutes }}m</div><div class="label">Mediana</div></div>
+          <div class="kpi"><div class="value {{ 'warn' if concurrent_sessions.long_session_count else 'ok' }}">{{ concurrent_sessions.long_session_count }}</div><div class="label">&gt;= {{ concurrent_sessions.long_session_hours }}h</div></div>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <p class="muted" style="margin:0;">Detalle completo de sesiones (gráficos, tablas por cuenta/servidor) en la pestaña {% if 'sessions' not in excluded_tabs %}<a href="#sessions" class="tab-link" data-jump-target="sessions">Sesiones</a>{% else %}Sesiones{% endif %}.</p>
+      </div>
+    </div>

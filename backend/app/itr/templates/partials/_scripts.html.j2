@@ -1,0 +1,510 @@
+  // ---- Tabs ----
+  function activateTab(tabId) {
+    const btn = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
+    const panel = document.getElementById(tabId);
+    if (!btn || !panel) return;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tabpanel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    panel.classList.add('active');
+  }
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activateTab(btn.dataset.tab);
+      // Cierra el menú hamburguesa mobile al elegir una pestaña - el truco
+      // CSS de label+checkbox no alcanza a hacerlo solo porque el click cae
+      // en el <button> anidado, no en el <label>, y el navegador no lo
+      // reenvía al checkbox asociado (ver nav-toggle en _header.html.j2).
+      const navToggle = document.getElementById('nav-toggle');
+      if (navToggle) navToggle.checked = false;
+    });
+  });
+  // Enlaces internos (ej. "ver pestaña Hallazgos", "ver pestaña KPI's" dentro
+  // de un tooltip) que saltan a otra pestaña, o hacen scroll a una sección
+  // puntual si el destino está en la misma pestaña ya activa.
+  function jumpTo(targetId) {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    const panel = el.closest('.tabpanel');
+    if (panel && !panel.classList.contains('active')) activateTab(panel.id);
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  document.querySelectorAll('.tab-link[data-jump-target]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      jumpTo(link.dataset.jumpTarget);
+    });
+  });
+
+  // ---- Charts ----
+  // Paleta de acento - 8 colores en el orden validado como colorblind-safe
+  // entre pares adyacentes (ver skill de dataviz - ΔE >= 8 CVD / >= 15
+  // visión normal), en vez de negro/gris. El primer color (#2a78d6) es el
+  // acento primario del reporte y se usa suelto (sin pasar por
+  // accentColors) en los gráficos de barra/línea de una sola serie, para
+  // que todas las pestañas compartan el mismo azul. Con más de 8
+  // categorías (ej. Plataformas por Tipo de Sistema) accentColors() cicla
+  // - no hay forma de garantizar distinción par a par más allá de eso, así
+  // que el legend de Chart.js sigue siendo la fuente de verdad para
+  // identificar cada categoría, el color es una ayuda visual.
+  const ACCENT_PALETTE = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'];
+  function accentColors(n) {
+    return Array.from({ length: n }, (_, i) => ACCENT_PALETTE[i % ACCENT_PALETTE.length]);
+  }
+
+  const statusLabels = {{ status_labels | tojson }};
+  const statusValues = {{ status_values | tojson }};
+  const statusColors = {{ status_colors | tojson }};
+  const platformLabels = {{ platform_labels | tojson }};
+  const platformValues = {{ platform_values | tojson }};
+  const changeLabels = {{ change_labels | tojson }};
+  const changeValues = {{ change_values | tojson }};
+  const verifyValues = {{ verify_values | tojson }};
+  const complianceCatLabels = {{ compliance_cat_labels | tojson }};
+  const complianceCatValues = {{ compliance_cat_values | tojson }};
+
+  new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: { labels: statusLabels, datasets: [{ data: statusValues, backgroundColor: statusColors }] }
+  });
+
+  new Chart(document.getElementById('platformChart'), {
+    type: 'bar',
+    data: { labels: platformLabels, datasets: [{ label: 'Cuentas', data: platformValues, backgroundColor: '#2a78d6' }] },
+    options: { indexAxis: 'y' }
+  });
+
+  new Chart(document.getElementById('platformSystemTypeChart'), {
+    type: 'doughnut',
+    data: {
+      labels: {{ platform_system_type_labels | tojson }},
+      datasets: [{ data: {{ platform_system_type_values | tojson }}, backgroundColor: accentColors({{ platform_system_type_labels | length }}) }]
+    }
+  });
+
+  new Chart(document.getElementById('safeRetentionChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ retention_labels | tojson }},
+      datasets: [{ label: 'Safes', data: {{ retention_values | tojson }}, backgroundColor: '#2a78d6' }]
+    }
+  });
+
+  new Chart(document.getElementById('safeMemberTypeChart'), {
+    type: 'doughnut',
+    data: {
+      labels: {{ member_type_labels | tojson }},
+      datasets: [{ data: {{ member_type_values | tojson }}, backgroundColor: accentColors({{ member_type_labels | length }}) }]
+    }
+  });
+
+  new Chart(document.getElementById('platformChartOverview'), {
+    type: 'bar',
+    data: { labels: platformLabels, datasets: [{ label: 'Cuentas', data: platformValues, backgroundColor: '#2a78d6' }] },
+    options: { indexAxis: 'y' }
+  });
+
+  new Chart(document.getElementById('complianceChartOverview'), {
+    type: 'doughnut',
+    data: { labels: ['Cumple', 'No cumple'], datasets: [{ data: [{{ compliance.compliant | tojson }}, {{ compliance.non_compliant | tojson }}], backgroundColor: ['#2e7d54','#c0392b'] }] }
+  });
+
+  new Chart(document.getElementById('complianceBreakdownChart'), {
+    type: 'doughnut',
+    data: { labels: complianceCatLabels, datasets: [{ data: complianceCatValues, backgroundColor: ['#2e7d54','#c0392b','#b8860b','#6b7280','#8a9095'] }] }
+  });
+
+  new Chart(document.getElementById('changeChart'), {
+    type: 'bar',
+    data: { labels: changeLabels, datasets: [{ label: 'Cuentas', data: changeValues, backgroundColor: '#2a78d6' }] },
+    options: { indexAxis: 'y' }
+  });
+
+  new Chart(document.getElementById('verifyChart'), {
+    type: 'bar',
+    data: { labels: changeLabels, datasets: [{ label: 'Cuentas', data: verifyValues, backgroundColor: '#2a78d6' }] },
+    options: { indexAxis: 'y' }
+  });
+
+  new Chart(document.getElementById('cpmFailureReasonChart'), {
+    type: 'bar',
+    data: { labels: {{ cpm_errors.reason_labels | tojson }}, datasets: [{ label: 'Cuentas', data: {{ cpm_errors.reason_values | tojson }}, backgroundColor: '#2a78d6' }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } } }
+  });
+
+  // ---- Gauges (half-doughnut) de % nunca gestionadas/verificadas ----
+  function makeGauge(canvasId, pct, color) {
+    new Chart(document.getElementById(canvasId), {
+      type: 'doughnut',
+      data: {
+        labels: ['%', ''],
+        datasets: [{ data: [pct, 100 - pct], backgroundColor: [color, '#eef1f4'], borderWidth: 0 }]
+      },
+      options: {
+        rotation: -90,
+        circumference: 180,
+        cutout: '70%',
+        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+      }
+    });
+  }
+  makeGauge('neverVerifiedGauge', {{ never_verified_pct | tojson }}, {{ never_verified_pct | tojson }} >= 30 ? '#c0392b' : '#b8860b');
+
+  // ---- Cuentas creadas por mes ----
+  const accountsCreatedLabels = {{ accounts_created_labels | tojson }};
+  const accountsCreatedValues = {{ accounts_created_values | tojson }};
+  new Chart(document.getElementById('accountsCreatedChart'), {
+    type: 'line',
+    data: {
+      labels: accountsCreatedLabels,
+      datasets: [{ label: 'Cuentas creadas', data: accountsCreatedValues, borderColor: '#2a78d6', backgroundColor: 'rgba(42,120,214,0.10)', fill: true, tension: 0.2 }]
+    },
+    options: { plugins: { legend: { display: false } } }
+  });
+
+  new Chart(document.getElementById('usersByTypeChart'), {
+    type: 'doughnut',
+    data: {
+      labels: {{ users_type_labels | tojson }},
+      datasets: [{ data: {{ users_type_values | tojson }}, backgroundColor: accentColors({{ users_type_labels | length }}) }]
+    }
+  });
+
+  new Chart(document.getElementById('usersLastLogonChart'), {
+    type: 'doughnut',
+    data: {
+      labels: {{ last_logon_labels | tojson }},
+      datasets: [{ data: {{ last_logon_values | tojson }}, backgroundColor: {{ last_logon_colors | tojson }} }]
+    }
+  });
+
+  // ---- KPI's: actividad de cuentas (PSM Connect) ----
+  new Chart(document.getElementById('activityUsedChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Con uso', 'Sin uso'],
+      datasets: [{ data: [{{ account_activity.used | tojson }}, {{ account_activity.unused | tojson }}], backgroundColor: ['#2e7d54', '#c0392b'] }]
+    }
+  });
+
+  new Chart(document.getElementById('activityBucketChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ account_activity.bucket_labels | tojson }},
+      datasets: [{ label: 'Cuentas', data: {{ account_activity.bucket_values | tojson }}, backgroundColor: '#2a78d6' }]
+    }
+  });
+
+  new Chart(document.getElementById('activityTopChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ top_active_labels | tojson }},
+      datasets: [{ label: 'Sesiones', data: {{ top_active_values | tojson }}, backgroundColor: '#2a78d6' }]
+    },
+    options: { indexAxis: 'y' }
+  });
+
+  new Chart(document.getElementById('concurrentSessionsChart'), {
+    type: 'line',
+    data: {
+      labels: {{ concurrent_sessions.day_labels | tojson }},
+      datasets: [{
+        label: 'Pico de sesiones concurrentes',
+        data: {{ concurrent_sessions.day_values | tojson }},
+        borderColor: '#2a78d6',
+        backgroundColor: 'rgba(42,120,214,0.10)',
+        fill: true,
+        tension: 0.2
+      }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+
+  new Chart(document.getElementById('sessionsByHourChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ concurrent_sessions.hour_labels | tojson }},
+      datasets: [{ label: 'Sesiones iniciadas', data: {{ concurrent_sessions.hour_values | tojson }}, backgroundColor: '#2a78d6' }]
+    },
+    options: { plugins: { legend: { display: false } } }
+  });
+
+  // ---- Infraestructura (datos manuales, HealthCheck_*.json) ----
+  {% if infra_servers_view %}
+  new Chart(document.getElementById('infraResourcesChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ infra_host_labels | tojson }},
+      datasets: [
+        { label: 'CPU %', data: {{ infra_cpu_values | tojson }}, backgroundColor: ACCENT_PALETTE[0] },
+        { label: 'RAM %', data: {{ infra_ram_values | tojson }}, backgroundColor: ACCENT_PALETTE[1] }
+      ]
+    },
+    options: { scales: { y: { beginAtZero: true, max: 100 } } }
+  });
+
+  new Chart(document.getElementById('infraServicesChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['En ejecución', 'Detenidos'],
+      datasets: [{ data: [{{ services_running | tojson }}, {{ services_stopped | tojson }}], backgroundColor: ['#2e7d54', '#c0392b'] }]
+    }
+  });
+
+  new Chart(document.getElementById('infraDiskChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ infra_disk_labels | tojson }},
+      datasets: [{ label: '% Usado', data: {{ infra_disk_values | tojson }}, backgroundColor: '#2a78d6' }]
+    },
+    options: { indexAxis: 'y', scales: { x: { beginAtZero: true, max: 100 } } }
+  });
+  {% endif %}
+
+  // ---- Findings: chips de resumen filtran las tarjetas por severidad ----
+  // data-filter-severity="" (chip "Total") limpia el filtro. Clic sobre el
+  // chip activo lo desactiva (toggle); clic sobre otro chip lo reemplaza.
+  (function () {
+    const chips = document.querySelectorAll('.finding-chip');
+    const cards = document.querySelectorAll('.finding-card');
+    const categories = document.querySelectorAll('.finding-category');
+
+    function applyFilter(severity) {
+      cards.forEach(card => {
+        card.style.display = (!severity || card.dataset.severity === severity) ? '' : 'none';
+      });
+      categories.forEach(cat => {
+        const anyVisible = Array.from(cat.querySelectorAll('.finding-card'))
+          .some(card => card.style.display !== 'none');
+        cat.style.display = anyVisible ? '' : 'none';
+      });
+    }
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const severity = chip.dataset.filterSeverity;
+        const alreadyActive = chip.classList.contains('active');
+        chips.forEach(c => c.classList.remove('active'));
+        if (!severity || alreadyActive) {
+          document.querySelector('.finding-chip[data-filter-severity=""]').classList.add('active');
+          applyFilter(null);
+        } else {
+          chip.classList.add('active');
+          applyFilter(severity);
+        }
+      });
+    });
+  })();
+
+  // ---- Tabla interactiva: orden por columna + búsqueda + paginación + export CSV ----
+  // Todas las filas siguen viviendo en el DOM (para que sort/búsqueda/export
+  // sigan operando sobre el dataset completo), pero solo se muestran
+  // PAGE_SIZE por vez - en tenants con miles de cuentas/miembros de Safe
+  // evita que el navegador tenga que pintar/reflow miles de <tr> de golpe.
+  const TABLE_PAGE_SIZE = 100;
+
+  // Agrupado por Host Name vía fila de subencabezado (Connector Management,
+  // tablas de Infraestructura): el host ya no es una columna de la tabla,
+  // así que se lee de data-host en vez de una celda. Se recalcula sobre las
+  // filas VISIBLES en el DOM en cada render (después de ordenar/buscar/
+  // paginar), así que los subencabezados quedan bien ubicados sin importar
+  // cómo esté ordenada la tabla en ese momento.
+  function applyHostGroupHeaders(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    tbody.querySelectorAll('tr.host-group-header').forEach(tr => tr.remove());
+    const colCount = table.querySelectorAll('thead th').length;
+    const dataRows = Array.from(tbody.querySelectorAll('tr:not(.host-group-header)'))
+      .filter(row => row.style.display !== 'none' && row.dataset.host !== undefined);
+    let prevHost = null;
+    dataRows.forEach(row => {
+      const host = row.dataset.host || '';
+      if (host !== prevHost) {
+        const headerRow = document.createElement('tr');
+        headerRow.className = 'host-group-header';
+        const td = document.createElement('td');
+        td.colSpan = colCount;
+        td.textContent = host;
+        headerRow.appendChild(td);
+        tbody.insertBefore(headerRow, row);
+        prevHost = host;
+      }
+    });
+  }
+
+  // Las columnas de fecha se muestran como "DD-MM-AAAA" o "DD-MM-AAAA HH:MM"
+  // (ej. Created Time, Last Logon, LastLogin, Vence el) - ordenarlas como
+  // texto (localeCompare) NO da orden cronológico porque el día va primero,
+  // no el año. data-type="date" usa esto para parsear a epoch antes de
+  // comparar. Texto que no matchea (ej. "Nunca", "No disponible", "-")
+  // cae a -Infinity, igual que un número no parseable en data-type="num".
+  function parseDdMmYyyy(text) {
+    const m = text.match(/^(\d{2})-(\d{2})-(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+    if (!m) return -Infinity;
+    const [, d, mo, y, h, mi] = m;
+    return new Date(Number(y), Number(mo) - 1, Number(d), Number(h || 0), Number(mi || 0)).getTime();
+  }
+
+  function makeTableInteractive(tableId, searchInputId, exportBtnId, exportFileName, pageSize = TABLE_PAGE_SIZE, onRender = null) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    const headers = table.querySelectorAll('thead th');
+    let allRows = Array.from(tbody.querySelectorAll('tr'));
+    let currentPage = 1;
+
+    const scrollDiv = table.closest('.table-scroll') || table;
+    const pager = document.createElement('div');
+    pager.className = 'table-pager';
+    pager.innerHTML = '<button type="button" class="pager-btn" data-dir="prev">&larr; Anterior</button>'
+      + '<span class="pager-info"></span>'
+      + '<button type="button" class="pager-btn" data-dir="next">Siguiente &rarr;</button>';
+    scrollDiv.insertAdjacentElement('afterend', pager);
+    const pagerInfo = pager.querySelector('.pager-info');
+    const prevBtn = pager.querySelector('[data-dir="prev"]');
+    const nextBtn = pager.querySelector('[data-dir="next"]');
+
+    function matchingRows() {
+      const term = (searchInput ? searchInput.value.trim().toLowerCase() : '');
+      if (!term) return allRows;
+      // dataset.host cubre Connector Management, donde el host ya no es una
+      // columna visible (ver applyHostGroupHeaders) pero el buscador "por
+      // host" del placeholder tiene que seguir funcionando igual.
+      return allRows.filter(row =>
+        row.innerText.toLowerCase().includes(term) ||
+        (row.dataset.host || '').toLowerCase().includes(term)
+      );
+    }
+
+    function render() {
+      const matched = matchingRows();
+      const totalPages = Math.max(1, Math.ceil(matched.length / pageSize));
+      currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+      const start = (currentPage - 1) * pageSize;
+      const pageRows = new Set(matched.slice(start, start + pageSize));
+
+      allRows.forEach(row => { row.style.display = pageRows.has(row) ? '' : 'none'; });
+
+      pagerInfo.textContent = matched.length === 0
+        ? 'Sin resultados'
+        : `Página ${currentPage} de ${totalPages} (${matched.length} filas)`;
+      prevBtn.disabled = currentPage <= 1;
+      nextBtn.disabled = currentPage >= totalPages;
+      if (onRender) onRender();
+    }
+
+    prevBtn.addEventListener('click', () => { currentPage -= 1; render(); });
+    nextBtn.addEventListener('click', () => { currentPage += 1; render(); });
+
+    headers.forEach((th, colIndex) => {
+      th.addEventListener('click', () => {
+        const type = th.dataset.type || 'text';
+        const currentlyAsc = th.classList.contains('sort-asc');
+        headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+        const asc = !currentlyAsc;
+        th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+
+        function compareCol(a, b) {
+          let av = a.children[colIndex].innerText.trim();
+          let bv = b.children[colIndex].innerText.trim();
+          if (type === 'num') {
+            av = parseFloat(av.replace(',', '.')) || -Infinity;
+            bv = parseFloat(bv.replace(',', '.')) || -Infinity;
+            return asc ? av - bv : bv - av;
+          }
+          if (type === 'date') {
+            av = parseDdMmYyyy(av);
+            bv = parseDdMmYyyy(bv);
+            return asc ? av - bv : bv - av;
+          }
+          return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+        }
+
+        // Tablas con subencabezado de grupo (data-host, ver
+        // applyHostGroupHeaders): el host manda como criterio de orden
+        // principal SIEMPRE, y la columna clickeada ordena solo DENTRO de
+        // cada grupo - si no, ordenar por Componente/CPU/etc. mezclaba
+        // filas de hosts distintos y el agrupado quedaba con un
+        // subencabezado casi por fila.
+        const grouped = allRows.some(r => r.dataset.host !== undefined);
+        allRows.sort((a, b) => {
+          if (grouped) {
+            const ha = a.dataset.host || '';
+            const hb = b.dataset.host || '';
+            if (ha !== hb) return ha.localeCompare(hb);
+          }
+          return compareCol(a, b);
+        });
+        allRows.forEach(r => tbody.appendChild(r));
+        currentPage = 1;
+        render();
+      });
+    });
+
+    const searchInput = document.getElementById(searchInputId);
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        currentPage = 1;
+        render();
+      });
+    }
+
+    // Neutraliza CSV/formula injection: si una celda empieza con =, +, -, @,
+    // tab o CR (caracteres que Excel/Sheets interpretan como inicio de
+    // fórmula), se le antepone un apóstrofe para que quede como texto plano.
+    function csvCell(text) {
+      let v = text;
+      if (/^[=+\-@\t\r]/.test(v)) {
+        v = "'" + v;
+      }
+      return '"' + v.replace(/"/g, '""') + '"';
+    }
+
+    const exportBtn = document.getElementById(exportBtnId);
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        // Exporta TODAS las filas que matchean la búsqueda, no solo la
+        // página actual - la paginación es solo una ayuda de renderizado.
+        // Si la tabla trae data-host (Connector Management), el host se
+        // agrega como primera columna del CSV aunque ya no se muestre como
+        // columna en pantalla (ver applyHostGroupHeaders) - si no, se
+        // perdía ese dato al exportar.
+        const hasHost = allRows.some(row => row.dataset.host !== undefined);
+        const headerLabels = (hasHost ? [csvCell('Host')] : []).concat(
+          Array.from(headers).map(h => csvCell(h.innerText))
+        );
+        const csvRows = matchingRows().map(row => {
+          const cells = Array.from(row.children).map(td => csvCell(td.innerText));
+          return (hasHost ? [csvCell(row.dataset.host || '')] : []).concat(cells).join(',');
+        });
+        const csv = [headerLabels.join(',')].concat(csvRows).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = exportFileName;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    render();
+  }
+
+  makeTableInteractive('platformsTable', 'platformsSearch', 'platformsExportBtn', 'platforms.csv');
+  makeTableInteractive('safesTable', 'safesSearch', 'safesExportBtn', 'safes.csv');
+  makeTableInteractive('membersTable', 'membersSearch', 'membersExportBtn', 'safe_members.csv');
+  makeTableInteractive('compliancePlatformTable', 'compliancePlatformSearch', 'compliancePlatformExportBtn', 'compliance_by_platform.csv');
+  makeTableInteractive('activeComponentsTable', 'activeComponentsSearch', 'activeComponentsExportBtn', 'active_components.csv');
+  makeTableInteractive('connectorsTable', 'connectorsSearch', 'connectorsExportBtn', 'connectors.csv', TABLE_PAGE_SIZE, () => applyHostGroupHeaders('connectorsTable'));
+  makeTableInteractive('siaConnectorsTable', 'siaConnectorsSearch', 'siaConnectorsExportBtn', 'sia_connectors.csv');
+  makeTableInteractive('accountsTable', 'accountsSearch', 'accountsExportBtn', 'accounts.csv');
+  makeTableInteractive('overviewAccountsTable', 'overviewAccountsSearch', 'overviewAccountsExportBtn', 'accounts.csv');
+  makeTableInteractive('usersTable', 'usersSearch', 'usersExportBtn', 'users.csv');
+  makeTableInteractive('licenseUsersTable', 'licenseUsersSearch', 'licenseUsersExportBtn', 'license_users.csv');
+  makeTableInteractive('infraServicesTable', 'infraServicesSearch', 'infraServicesExportBtn', 'infra_services.csv', TABLE_PAGE_SIZE, () => applyHostGroupHeaders('infraServicesTable'));
+  makeTableInteractive('infraDisksTable', 'infraDisksSearch', 'infraDisksExportBtn', 'infra_disks.csv', TABLE_PAGE_SIZE, () => applyHostGroupHeaders('infraDisksTable'));
+  makeTableInteractive('infraCertsTable', 'infraCertsSearch', 'infraCertsExportBtn', 'infra_rdp_certs.csv', TABLE_PAGE_SIZE, () => applyHostGroupHeaders('infraCertsTable'));
+  makeTableInteractive('activityTable', 'activitySearch', 'activityExportBtn', 'account_activity.csv');
+  makeTableInteractive('offHoursTable', 'offHoursSearch', 'offHoursExportBtn', 'sesiones_fuera_de_horario.csv');

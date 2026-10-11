@@ -1,0 +1,123 @@
+    <div class="grid" style="grid-template-columns: 1fr;">
+      <div class="card kpi-hero-row" style="padding: 0;">
+        <div class="kpi-hero">
+          <div class="value">{{ safes_analysis.total }}</div>
+          <div class="label">Safes visibles</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value crit">{{ safes_analysis.no_cpm_count }}</div>
+          <div class="label">Sin CPM asignado</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value">{{ safes_analysis.empty_count }}</div>
+          <div class="label">Vacías (0 cuentas)</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value">{{ safes_analysis.olac_count }}</div>
+          <div class="label" title="Object Level Access Control: permite definir permisos por cuenta individual dentro del Safe, en vez de un único nivel de acceso para todas las cuentas del Safe.">Safes con OLAC &#9432;</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="section-label">Distribución</div>
+
+      <div class="card">
+        <h2>Retención de contraseñas por Safe (días)</h2>
+        <canvas id="safeRetentionChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Safe Members por tipo</h2>
+        <canvas id="safeMemberTypeChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="section-label">Detalle</div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Safes</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="safesSearch" class="table-search" placeholder="Buscar por nombre de safe...">
+            <button id="safesExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="safesTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Nombre del Safe</th>
+                <th data-type="text">Descripción</th>
+                <th data-type="num">Cuentas</th>
+                <th data-type="text">CPM que Gestiona</th>
+                <th data-type="text" title="Object Level Access Control: permite definir permisos por cuenta individual dentro del Safe, en vez de un único nivel de acceso para todas las cuentas del Safe.">OLAC</th>
+                <th data-type="text">Purga Automática</th>
+                <th data-type="text">Retención</th>
+                <th data-type="text">Creador</th>
+                <th data-type="text">Fecha de Creación</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in safes_view %}
+              <tr>
+                <td>{{ s.name }}</td>
+                <td class="muted">{{ s.description or '-' }}</td>
+                <td class="{{ s.accounts_cls }}">{{ s.accounts }}</td>
+                <td>{{ s.managing_cpm }}</td>
+                <td class="{{ s.olac_cls }}">{{ s.olac_enabled | si_no }}</td>
+                <td>{{ s.auto_purge | si_no }}</td>
+                <td>{{ s.retention_txt }}</td>
+                <td>{{ s.creator }}</td>
+                <td>{{ s.creation_date }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Miembros de Safe</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="membersSearch" class="table-search" placeholder="Buscar por safe o miembro...">
+            <button id="membersExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <p class="muted">Permisos resumidos (de ~20 flags que devuelve la API se muestran los más relevantes para una revisión rápida).</p>
+        <div class="table-scroll">
+          <table id="membersTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Nombre del Safe</th>
+                <th data-type="text">Nombre del Miembro</th>
+                <th data-type="text">Tipo de Miembro</th>
+                <th data-type="text">Vencimiento</th>
+                <th data-type="text">List Accounts</th>
+                <th data-type="text">Use Accounts</th>
+                <th data-type="text">Retrieve Accounts</th>
+                <th data-type="text">Manage Safe</th>
+                <th data-type="text">Manage Members</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for m in safe_members_analysis.rows %}
+              <tr>
+                <td>{{ m.safe_name }}</td>
+                <td>{{ m.member_name }}</td>
+                <td>{{ m.member_type }}</td>
+                <td class="muted">{{ m.expiration }}</td>
+                <td>{{ m.list_accounts | si_no }}</td>
+                <td>{{ m.use_accounts | si_no }}</td>
+                <td>{{ m.retrieve_accounts | si_no }}</td>
+                <td>{{ m.manage_safe | si_no }}</td>
+                <td>{{ m.manage_safe_members | si_no }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>

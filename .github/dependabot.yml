@@ -1,0 +1,39 @@
+# Alertas + PRs automáticos de dependencias vulnerables/desactualizadas.
+# No reemplaza pip-audit/npm audit de CI (esos corren en cada push/PR con
+# los pines reales del lockfile); esto es la capa que avisa sin que haga
+# falta correrlo a mano -- ver docs/security.md "Registro de parches".
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    # Un solo PR semanal con todos los bumps menores/parche; los saltos de
+    # versión mayor siguen llegando en PRs individuales para revisarlos aparte.
+    groups:
+      backend-minor-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      # fastapi==0.121.1 pinnea starlette<0.50.0 -- un bump de starlette a
+      # 1.x rompe el install (ResolutionImpossible). Sacar cuando se migre
+      # fastapi a una versión que soporte starlette 1.x. Ver docs/security.md.
+      - dependency-name: starlette
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      frontend-minor-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]

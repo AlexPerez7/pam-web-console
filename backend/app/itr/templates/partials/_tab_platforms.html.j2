@@ -1,0 +1,110 @@
+    <div class="grid" style="grid-template-columns: 1fr;">
+      <div class="card kpi-hero-row" style="padding: 0;">
+        <div class="kpi-hero">
+          <div class="value">{{ platforms_analysis.total }}</div>
+          <div class="label">Plataformas</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value ok">{{ platforms_analysis.active }}</div>
+          <div class="label">Activas</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value">{{ platforms_analysis.custom }}</div>
+          <div class="label">Personalizadas</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'warn' if platforms_analysis.unused_active else 'ok' }}">{{ platforms_analysis.unused_active }}</div>
+          <div class="label">Activas sin cuentas</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'crit' if platforms_analysis.no_periodic_rotation else 'ok' }}">{{ platforms_analysis.no_periodic_rotation }}</div>
+          <div class="label">Sin rotación automática</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'warn' if platforms_analysis.no_periodic_verification else 'ok' }}">{{ platforms_analysis.no_periodic_verification }}</div>
+          <div class="label">Sin verificación automática</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="section-label">Distribución</div>
+
+      <div class="card">
+        <h2>Estado de Gestión de Cuentas (por plataforma) &mdash; top 15</h2>
+        <canvas id="platformChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2 title="No incluye Account Groups (platformType = group), que son agrupadores administrativos y no un tipo de sistema real.">Plataformas por Tipo de Sistema &#9432;</h2>
+        <canvas id="platformSystemTypeChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="section-label">Detalle</div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Platforms</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="platformsSearch" class="table-search" placeholder="Buscar por nombre de plataforma...">
+            <button id="platformsExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="platformsTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Nombre de Plataforma</th>
+                <th data-type="text">Tipo de Sistema</th>
+                <th data-type="text">Activa</th>
+                <th data-type="num">Cuentas</th>
+                <th data-type="num">Cambio (días)</th>
+                <th data-type="num">Verificación (días)</th>
+                <th data-type="text">Rotación Automática</th>
+                <th data-type="text">Verificación Automática</th>
+                <th data-type="text">Reconciliación Automática</th>
+                <th data-type="text">Reconciliación Manual</th>
+                <th data-type="text">Monitoreo PSM</th>
+                <th data-type="text">Grabar Sesiones</th>
+                <th data-type="text">Control Dual</th>
+                <th data-type="text">OTP</th>
+                <th data-type="text">Acceso Exclusivo</th>
+                <th data-type="text">Servidor PSM</th>
+                <th data-type="text">Cuenta de Reconciliación</th>
+                <th data-type="text">Cuenta de Logon</th>
+                <th data-type="text">Personalizada</th>
+                <th data-type="text">Safes Permitidos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in platforms_view %}
+              <tr>
+                <td title="{{ p.description_txt }}">{{ p.name }}</td>
+                <td>{{ p.system_type }}</td>
+                <td class="{{ p.active_cls }}">{{ p.active | si_no }}</td>
+                <td>{{ p.accounts }}</td>
+                <td>{{ p.change_every_days_txt }}</td>
+                <td>{{ p.verify_every_days_txt }}</td>
+                <td class="{{ p.rotation_cls }}">{{ p.auto_rotation | si_no }}</td>
+                <td class="{{ p.verify_cls }}">{{ p.auto_verify | si_no }}</td>
+                <td class="{{ p.reconcile_auto_cls }}">{{ p.auto_reconcile | si_no }}</td>
+                <td>{{ p.allow_manual_reconcile | si_no }}</td>
+                <td class="{{ p.psm_monitoring_cls }}">{{ p.psm_monitoring | si_no }}</td>
+                <td>{{ p.record_sessions | si_no }}</td>
+                <td>{{ p.dual_control | si_no }}</td>
+                <td>{{ p.otp | si_no }}</td>
+                <td>{{ p.exclusive_access | si_no }}</td>
+                <td>{{ p.psm_server }}</td>
+                <td>{{ p.has_reconcile_account | si_no }}</td>
+                <td>{{ p.has_logon_account | si_no }}</td>
+                <td>{{ p.is_custom | si_no }}</td>
+                <td class="muted">{{ p.allowed_safes_txt }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>

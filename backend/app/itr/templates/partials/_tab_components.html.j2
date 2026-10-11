@@ -1,0 +1,157 @@
+    <div class="grid" style="grid-template-columns: 1fr;">
+      <div class="card kpi-hero-row" style="padding: 0;">
+        <div class="kpi-hero">
+          <div class="value {{ 'crit' if hero_components_down else 'ok' }}">{{ hero_components_connected }}/{{ hero_components_total }}</div>
+          <div class="label">Componentes Core conectados</div>
+          <div class="delta">{{ core_components_subtitle }}</div>
+        </div>
+        {% if connectors_view %}
+        <div class="kpi-hero">
+          <div class="value">{{ connectors_view | length }}</div>
+          <div class="label">Conectores gestionados</div>
+          <div class="delta">{{ connectors_hosts_subtitle }}</div>
+        </div>
+        {% endif %}
+        <div class="kpi-hero">
+          <div class="value {{ 'crit' if components_updates_pending else 'ok' }}">{{ components_updates_pending }}</div>
+          <div class="label">Con actualización pendiente</div>
+          <div class="delta {{ 'crit' if components_updates_pending else '' }}">{{ components_updates_subtitle }}</div>
+        </div>
+        {% if sia_connectors_view %}
+        <div class="kpi-hero">
+          <div class="value">{{ sia_active_sessions_total }}</div>
+          <div class="label">Sesiones activas SIA</div>
+          <div class="delta">{{ sia_sessions_subtitle }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: {{ '1fr 1fr' if sia_connectors_view else '1fr' }};">
+      <div class="section-label">Estado de componentes</div>
+
+      <div class="card">
+        <h2>Componentes Core{% if is_cloud %} (Privilege Cloud clásico){% endif %}</h2>
+        {% for c in components_view %}
+        {% if c.available %}
+        <div class="component-bar-row">
+          <div class="component-bar-label">{{ c.label }}</div>
+          <div class="component-bar-track">
+            <div class="bar-bg"><div class="bar-fill" style="width:{{ (c.connected / c.total_instances * 100) if c.total_instances else 0 }}%; background: {{ 'var(--crit)' if c.disconnected else 'var(--ok)' }};"></div></div>
+          </div>
+          <div class="component-bar-count">{{ c.connected }}/{{ c.total_instances }}</div>
+        </div>
+        {% else %}
+        <p class="muted">{{ c.label }}: sin datos disponibles vía API para este componente en este tenant.</p>
+        {% endif %}
+        {% else %}
+        <p class="muted">Sin componentes core configurados.</p>
+        {% endfor %}
+      </div>
+
+      {% if sia_connectors_view %}
+      <div class="card">
+        <h2>SIA Connectors</h2>
+        <div class="table-scroll">
+          <table>
+            <tr><th>Host</th><th>SO</th><th>Sesiones</th><th>Estado</th><th>Versión</th><th>Actualización</th></tr>
+            {% for c in sia_connectors_view %}
+            <tr>
+              <td>{{ c.host_name }}</td>
+              <td>{{ c.os }}</td>
+              <td>{{ c.sessions }}</td>
+              <td class="{{ c.status_cls }}">{{ c.status }}</td>
+              <td>{{ c.version }}</td>
+              <td class="{{ c.update_cls }}">{{ c.update_txt }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="grid">
+      <div class="section-label">Detalle</div>
+
+      {% if is_cloud %}
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Connector Management</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="connectorsSearch" class="table-search" placeholder="Buscar por host o componente...">
+            <button id="connectorsExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="connectorsTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Componente</th>
+                <th data-type="text">Estado</th>
+                <th data-type="text">Versión</th>
+                <th data-type="text">Actualización</th>
+                <th data-type="num">CPU</th>
+                <th data-type="num">Memoria</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in connectors_view %}
+              <tr data-host="{{ c.host_name }}">
+                <td>{{ c.component_label }}</td>
+                <td class="{{ c.status_cls }}">{{ c.component_status }}</td>
+                <td>{{ c.component_version }}</td>
+                <td class="{{ c.update_cls }}">{{ c.update_available }}</td>
+                <td>{{ c.cpu_txt }}</td>
+                <td>{{ c.mem_txt }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="6" class="muted">Connector Management no está configurado para este tenant, o no se pudo consultar.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Componentes Activos</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="activeComponentsSearch" class="table-search" placeholder="Buscar por usuario o IP...">
+            <button id="activeComponentsExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <div class="legend">
+          <span class="legend-item row-recent">LastLogon dentro de las últimas 48hs</span>
+          <span class="legend-item row-stale">Más de 48hs</span>
+          <span class="legend-item row-month">Dentro del último mes</span>
+          <span class="legend-item row-old">Dentro de los últimos 3 meses</span>
+          <span class="legend-item row-never">Nunca conectado</span>
+        </div>
+        <div class="table-scroll">
+          <table id="activeComponentsTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Usuario del Componente</th>
+                <th data-type="text">Tipo de Componente</th>
+                <th data-type="text">IP del Componente</th>
+                <th data-type="text">Versión</th>
+                <th data-type="date">Último Inicio de Sesión</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in active_components_view %}
+              <tr class="{{ c.row_cls }}">
+                <td>{{ c.component_user }}</td>
+                <td>{{ c.component_type }}</td>
+                <td>{{ c.component_ip }}</td>
+                <td>{{ c.version }}</td>
+                <td>{{ c.last_logon }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>

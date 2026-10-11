@@ -1,0 +1,178 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/*
+ * design system propio sobre Tailwind v4.
+ * Tokens del proyecto claude.ai/design "design system propio".
+ * Ver docs/specs/migracion-tailwind.md.
+ */
+
+/* --- Noto Sans (subset latin, self-hosted — sin request a fonts.gstatic.com).
+   El subset latin cubre todo lo que renderiza la UI en español (incl. ñ, á-ú,
+   ¿ ¡, símbolos < U+00FF); para el resto cae al stack de --font-sans. --- */
+@font-face {
+  font-family: "Noto Sans";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(./assets/fonts/noto-sans-latin.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* semánticos shadcn -> tokens del design system */
+  --background: #f7f9fa; /* gray-050 */
+  --foreground: #0b1620; /* ink-900 */
+  --card: #ffffff;
+  --card-foreground: #0b1620;
+  --popover: #ffffff;
+  --popover-foreground: #0b1620;
+  --primary: #002142; /* navy-900 */
+  --primary-foreground: #ffffff;
+  --secondary: #eef1f3; /* gray-100 */
+  --secondary-foreground: #4a5b68; /* gray-700 */
+  --muted: #eef1f3;
+  --muted-foreground: #4a5b68;
+  --accent: #e4f7fd; /* sky-100 */
+  --accent-foreground: #002142;
+  --destructive: #d50000; /* line-cyberdefense */
+  --destructive-foreground: #ffffff;
+  --border: #c3ccd1; /* gray-300 */
+  --input: #c3ccd1;
+  --ring: #14baed; /* sky-500 */
+}
+
+@theme {
+  --font-sans: "Noto Sans", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --color-navy-50: #e7edf3;
+  --color-navy-100: #c6d4e1;
+  --color-navy-500: #3c6f97;
+  --color-navy-700: #1a4467;
+  --color-navy-800: #0a3155;
+  --color-navy-900: #002142;
+
+  --color-sky-50: #f2fbfe;
+  --color-sky-100: #e4f7fd;
+  --color-sky-300: #93dff6;
+  --color-sky-500: #14baed;
+  --color-sky-600: #02a4d3;
+
+  --color-line-awareness: #f75817;
+  --color-line-cloud: #007ec8;
+  --color-line-consulting: #deb214;
+  --color-line-cyberdefense: #d50000;
+  --color-line-data: #c500c5;
+  --color-line-identity: #97b82c;
+  --color-line-transformation: #007f57;
+  /* Tinta ACCESIBLE para texto de estado (WCAG AA >= 4.5:1 sobre blanco,
+     muted y los fondos claros de badge/alert). Los colores de línea de
+     negocio de arriba se mantienen para fondos/bordes/íconos: como TEXTO
+     el verde (2.3:1) y el amarillo (2.0:1) no se leen. Auditado con axe-core
+     el 2026-09-28. */
+  --color-success-ink: #4f6b12;
+  --color-warning-ink: #7a5f08;
+  --color-danger-ink: #b00000;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+}
+
+/* Impresión / "Guardar como PDF" — pensado para el dashboard. El ocultado de
+   la navegación lo hacen las utilidades `print:hidden` en el markup; acá va
+   lo que no es una utilidad: márgenes y corte de tarjetas. */
+@media print {
+  main {
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  [class*="rounded-"][class*="border"] {
+    break-inside: avoid;
+  }
+}
+
+/* Accesibilidad: si el sistema operativo pide reducir movimiento, sin
+   animaciones de entrada/salida (diálogos, paneles, toasts). Los spinners de
+   carga se mantienen: son la única señal de que algo está en curso. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-spin {
+    animation-duration: 1s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
+
+/* Scroll de la sidebar navy: la barra nativa (gris clara en Windows) rompe
+   el panel. Fina, del mismo navy, y más visible sólo al pasar el mouse. */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.sidebar-scroll:hover,
+.sidebar-scroll:focus-within {
+  scrollbar-color: var(--color-navy-500) transparent;
+}
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+.sidebar-scroll:hover::-webkit-scrollbar-thumb,
+.sidebar-scroll:focus-within::-webkit-scrollbar-thumb {
+  background: var(--color-navy-500);
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-sky-300);
+}
+.sidebar-scroll::-webkit-scrollbar-button {
+  display: none;
+}

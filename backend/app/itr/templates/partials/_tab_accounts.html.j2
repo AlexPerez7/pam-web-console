@@ -1,0 +1,106 @@
+    <div class="grid" style="grid-template-columns: 1fr;">
+      <div class="card kpi-hero-row" style="padding: 0;">
+        <div class="kpi-hero">
+          <div class="value {{ 'crit' if never_verified_pct >= 30 else ('warn' if never_verified_pct >= 10 else 'ok') }}">{{ never_verified_pct }}%</div>
+          <div class="label">Nunca verificadas</div>
+          <div class="delta">{{ accounts_analysis.never_verified }} cuentas</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'crit' if accounts_never_logon_pct >= 30 else ('warn' if accounts_never_logon_pct >= 10 else 'ok') }}">{{ accounts_never_logon_pct }}%</div>
+          <div class="label">Nunca inició sesión (PSM)</div>
+          <div class="delta">{{ accounts_never_logon }} cuentas</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'ok' if not accounts_analysis.never_changed else 'crit' }}">{{ accounts_analysis.never_changed }}</div>
+          <div class="label">Nunca gestionadas</div>
+          <div class="delta">{{ 'Cambio de contraseña al día' if not accounts_analysis.never_changed else (accounts_analysis.never_changed ~ ' cuentas') }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="section-label">Estado de gestión</div>
+
+      <div class="card">
+        <h2>Estado de Gestión de Cuentas</h2>
+        <canvas id="statusChart"></canvas>
+      </div>
+      <div class="card">
+        <h2>Último Cambio de Contraseña</h2>
+        <p class="muted">Cuentas nunca gestionadas: {{ accounts_analysis.never_changed }}</p>
+        <canvas id="changeChart"></canvas>
+      </div>
+      <div class="card">
+        <h2>Última Verificación</h2>
+        <p class="muted">Cuentas nunca verificadas: {{ accounts_analysis.never_verified }}</p>
+        <canvas id="verifyChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="section-label">Riesgo</div>
+
+      <div class="card">
+        <h2>% Nunca verificadas</h2>
+        <canvas id="neverVerifiedGauge"></canvas>
+        <p class="gauge-value {{ 'crit' if never_verified_pct >= 30 else ('warn' if never_verified_pct >= 10 else 'ok') }}">{{ never_verified_pct }}%</p>
+      </div>
+
+      <div class="card">
+        <h2>Último Inicio de Sesión (PSM)</h2>
+        <div class="kpi-row">
+          <div class="kpi"><div class="value {{ 'crit' if accounts_never_logon_pct >= 30 else ('warn' if accounts_never_logon_pct >= 10 else 'ok') }}">{{ accounts_never_logon }}</div><div class="label">Nunca se logueó</div></div>
+          <div class="kpi"><div class="value">{{ accounts_never_logon_pct }}%</div><div class="label">del total</div></div>
+        </div>
+        <p class="muted">Basado en el historial completo disponible, no solo los últimos 30 días.</p>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="section-label">Tendencia</div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <h2>Cuentas creadas por mes</h2>
+        <canvas id="accountsCreatedChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="section-label">Detalle</div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Todas las cuentas</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="accountsSearch" class="table-search" placeholder="Buscar por usuario, address, plataforma o safe...">
+            <button id="accountsExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="accountsTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Usuario</th>
+                <th data-type="text">Dirección</th>
+                <th data-type="text">Plataforma</th>
+                <th data-type="text">Safe</th>
+                <th data-type="date">Fecha de Creación</th>
+                <th data-type="date">Último Inicio de Sesión</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in accounts_table %}
+              <tr>
+                <td>{{ r.username }}</td>
+                <td>{{ r.address }}</td>
+                <td>{{ r.platform }}</td>
+                <td>{{ r.safe }}</td>
+                <td>{{ r.created }}</td>
+                <td>{{ r.last_logon }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>

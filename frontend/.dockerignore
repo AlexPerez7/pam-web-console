@@ -1,0 +1,10 @@
+node_modules
+dist
+.vite
+*.md
+# datos sensibles: nunca en el contexto de build
+.env
+.env.*
+*.pem
+*.key
+*.crt

@@ -1,0 +1,153 @@
+{% if infra_servers_view %}
+    <div class="grid" style="grid-template-columns: 1fr;">
+      <div class="card kpi-hero-row" style="padding: 0;">
+        <div class="kpi-hero">
+          <div class="value">{{ infra_servers_view | length }}</div>
+          <div class="label">Servidores relevados</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'crit' if services_stopped else 'ok' }}">{{ services_stopped }}</div>
+          <div class="label">Servicios detenidos</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'crit' if certs_expiring else 'ok' }}">{{ certs_expiring }}</div>
+          <div class="label">Certificados próx. a vencer/vencidos</div>
+        </div>
+        {% if entra_id_cert_view %}
+        <div class="kpi-hero">
+          <div class="value {{ entra_id_cert_view.cls }}">{{ entra_id_cert_view.days_remaining }}d</div>
+          <div class="label">Certificado Entra ID — vence</div>
+          <div class="delta">{{ entra_id_cert_view.expires_on_txt }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="section-label">Recursos</div>
+
+      <div class="card">
+        <h2>Uso de CPU / RAM por servidor</h2>
+        <canvas id="infraResourcesChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Servicios CyberArk (En ejecución / Detenidos)</h2>
+        <canvas id="infraServicesChart"></canvas>
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <h2>Recursos por servidor</h2>
+        <div class="table-scroll">
+          <table>
+            <tr><th>Host</th><th>Relevado</th><th>CPU</th><th>RAM</th></tr>
+            {% for s in infra_servers_view %}
+            <tr>
+              <td>{{ s.hostname }}</td>
+              <td>{{ s.checked_at or "-" }}</td>
+              <td>{{ s.cpu_txt }}</td>
+              <td>{{ s.ram_txt }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Uso de disco</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="infraDisksSearch" class="table-search" placeholder="Buscar por host o unidad...">
+            <button id="infraDisksExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <canvas id="infraDiskChart"></canvas>
+        <div class="table-scroll">
+          <table id="infraDisksTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Unidad</th>
+                <th data-type="num">% Usado</th>
+                <th data-type="text">Usado / Total (GB)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in infra_disks_view %}
+              <tr data-host="{{ d.hostname }}">
+                <td>{{ d.unit }}</td>
+                <td>{{ d.pct }}%</td>
+                <td>{{ d.used_gb }} / {{ d.total_gb }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr;">
+      <div class="section-label">Servicios y certificados</div>
+
+      <div class="card">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Servicios CyberArk</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="infraServicesSearch" class="table-search" placeholder="Buscar por host o servicio...">
+            <button id="infraServicesExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="infraServicesTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Servicio</th>
+                <th data-type="text">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for svc in infra_services_view %}
+              <tr data-host="{{ svc.hostname }}">
+                <td>{{ svc.name }}</td>
+                <td class="{{ svc.status_cls }}">{{ svc.status_txt }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Certificados RDP</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="infraCertsSearch" class="table-search" placeholder="Buscar por host...">
+            <button id="infraCertsExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="infraCertsTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Nombre del certificado</th>
+                <th data-type="date">Vence el</th>
+                <th data-type="num">Días restantes</th>
+                <th data-type="text">Próximo a vencer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in rdp_certs_view %}
+              <tr data-host="{{ c.hostname }}">
+                <td>{{ c.name }}</td>
+                <td>{{ c.expires_on_txt }}</td>
+                <td class="{{ c.cls }}">{{ c.days_remaining }}</td>
+                <td class="{{ c.cls }}">{{ c.expiring_soon | si_no }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+{% else %}
+    <div class="infobox">{{ infra_empty_msg }}</div>
+{% endif %}

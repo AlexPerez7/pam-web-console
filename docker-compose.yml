@@ -1,0 +1,121 @@
+name: pam-web-console
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pam
+      POSTGRES_USER: pam
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD en .env}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pam -d pam"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    # sin puertos publicados: solo accesible dentro de la red de compose
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PAM_DB_URL: postgresql+asyncpg://pam:${POSTGRES_PASSWORD}@db:5432/pam
+      PAM_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      # secret store: archivo cifrado con age + clave privada, read-only.
+      # Se generan en el server (ver README) y NO se commitean.
+      - ./secrets:/run/secrets:ro
+    # bind solo a localhost del host: se llega por túnel SSH o reverse proxy,
+    # nunca expuesto directo. (Docker publica saltándose ufw, por eso 127.0.0.1.)
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PAM_DB_URL: postgresql+asyncpg://pam:${POSTGRES_PASSWORD}@db:5432/pam
+      PAM_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      # mismo secret store que `api` (ver ese servicio) -- el worker
+      # también necesita autenticar contra CyberArk por tenant.
+      - ./secrets:/run/secrets:ro
+    command: ["arq", "app.jobs.worker.WorkerSettings"]
+    # sin puertos: no sirve HTTP, sólo consume jobs de Redis. El Dockerfile
+    # (compartido con `api`) trae un HEALTHCHECK que pega a
+    # localhost:8000/health -- nada escucha ahí en este servicio, así que
+    # queda "unhealthy" para siempre aunque el worker esté sano (confirmado
+    # en el server, 2026-09-23: procesó jobs bien con ese estado). Se
+    # deshabilita acá; la recuperación ante un crash real la sigue cubriendo
+    # `restart: unless-stopped`.
+    healthcheck:
+      disable: true
+
+  # Herramienta de administración, NO es parte del stack (perfil `tools`: no
+  # arranca con `up`). Misma imagen que `api`, pero con el secret store
+  # ESCRIBIBLE: `api` y `worker` siguen con `:ro`. Se usa a demanda:
+  #   docker compose run --rm secrets-admin set-tenant-secret <tenant>
+  secrets-admin:
+    build: ./backend
+    profiles: ["tools"]
+    env_file: .env
+    environment:
+      PAM_DB_URL: postgresql+asyncpg://pam:${POSTGRES_PASSWORD}@db:5432/pam
+      PAM_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./secrets:/run/secrets
+    # sin esto correría entrypoint.sh (migraciones + uvicorn)
+    entrypoint: ["python", "manage.py"]
+    healthcheck:
+      disable: true
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      PAM_HOSTNAME: ${PAM_HOSTNAME:-pam.local}
+    volumes:
+      # cert TLS. Si el dir está vacío, el contenedor genera uno self-signed
+      # al arrancar. Para uno real: dejar fullchain.pem + privkey.pem acá y
+      # reiniciar. NO se commitea. Ver tls/README.md.
+      - ./tls:/etc/nginx/tls
+    # :8080 (HTTP, solo localhost) para el acceso por túnel SSH.
+    # :443 (HTTPS) para acceso por hostname. PAM_HTTPS_BIND controla la
+    # exposición: 127.0.0.1 (default, seguro) o 0.0.0.0 / IP LAN para el
+    # equipo. OJO: Docker publica saltándose ufw.
+    ports:
+      - "127.0.0.1:8080:80"
+      - "${PAM_HTTPS_BIND:-127.0.0.1}:443:443"
+
+volumes:
+  db_data:

@@ -1,0 +1,188 @@
+    <div class="grid" style="grid-template-columns: 1fr;">
+      <div class="card kpi-hero-row" style="padding: 0;">
+        <div class="kpi-hero">
+          <div class="value {{ 'ok' if compliance.compliance_pct >= 80 else 'crit' }}">{{ compliance.compliance_pct }}%</div>
+          <div class="label">Cumplimiento</div>
+          <div class="delta {{ '' if compliance.compliance_pct >= 80 else 'crit' }}">{{ '▲ objetivo 80%' if compliance.compliance_pct >= 80 else '▼ objetivo 80%' }}</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value">{{ accounts_analysis.total }}</div>
+          <div class="label">Cuentas</div>
+          <div class="delta">{{ accounts_analysis.no_platform }} sin plataforma</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'crit' if hero_failure_count else 'ok' }}">{{ hero_failure_count }}</div>
+          <div class="label">Cuentas en Failure</div>
+          <div class="delta {{ 'crit' if hero_failure_count else '' }}">{{ hero_failure_pct }}% del total</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value">{{ users_analysis.total }}</div>
+          <div class="label">Usuarios</div>
+          <div class="delta">{{ safes_analysis.total }} safes / {{ platforms_analysis.total }} plataformas</div>
+        </div>
+        {% if hero_top_license %}
+        <div class="kpi-hero">
+          <div class="value" style="color: {{ hero_top_license.bar_color }};">{{ hero_top_license.pct }}%</div>
+          <div class="label">{{ hero_top_license.name }}</div>
+          <div class="delta-bar"><div class="delta-bar-fill" style="width: {{ hero_top_license.pct }}%; background: {{ hero_top_license.bar_color }};"></div></div>
+        </div>
+        {% endif %}
+        <div class="kpi-hero">
+          <div class="value {{ 'crit' if hero_components_down else 'ok' }}">{{ hero_components_connected }}/{{ hero_components_total }}</div>
+          <div class="label">Componentes conectados</div>
+          <div class="delta {{ 'crit' if hero_components_down else '' }}">{{ (hero_components_down ~ ' desconectado(s)') if hero_components_down else 'Todos conectados' }}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="finding-callout-header">
+          <div class="finding-callout-title"><span class="status-dot crit"></span>Hallazgos críticos</div>
+          <div class="finding-callout-pills">
+            <span class="finding-callout-pill crit">{{ findings_crit }} críticos</span>
+            <span class="finding-callout-pill warn">{{ findings_warn }} a revisar</span>
+            <span class="finding-callout-pill info">{{ findings_info }} informativos</span>
+          </div>
+        </div>
+        {% if findings_crit_list %}
+        <div class="finding-callout-grid">
+          {% for f in findings_crit_list %}
+          <div class="finding-callout-item">
+            <div class="finding-callout-bar"></div>
+            <div>
+              <div class="finding-callout-body-title">{{ f.text }}</div>
+              <div class="finding-callout-body-cat">{{ f.category }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="muted">No se detectaron hallazgos críticos.</p>
+        {% endif %}
+        <div class="finding-callout-footer">{{ findings_warn }} advertencia(s) y {{ findings_info }} informativo(s) &mdash; ver pestaña {% if 'findings' not in excluded_tabs %}<a href="#findings" class="tab-link" data-jump-target="findings"><b>Hallazgos</b></a>{% else %}<b>Hallazgos</b>{% endif %} para el detalle completo &rarr;</div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1.4fr 1fr 1fr;">
+      <div class="card">
+        <h2>Cuentas por plataforma</h2>
+        <p class="card-subtitle">Top 15 de {{ platforms_analysis.total }} plataformas configuradas</p>
+        <canvas id="platformChartOverview"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Cumplimiento</h2>
+        <p class="card-subtitle">Según política de rotación</p>
+        <div class="donut-with-legend">
+          <div class="donut-wrap"><canvas id="complianceChartOverview"></canvas></div>
+          <div class="legend-list">
+            <div class="legend-row"><span class="legend-swatch" style="background:#2e7d54;"></span><span class="legend-label">Cumple</span><span class="legend-count">{{ compliance.compliant }}</span></div>
+            <div class="legend-row"><span class="legend-swatch" style="background:#c0392b;"></span><span class="legend-label">No cumple</span><span class="legend-count">{{ compliance.non_compliant }}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Antigüedad de contraseñas</h2>
+        <p class="card-subtitle">Último cambio registrado</p>
+        <div class="legend-list">
+          {% for b in age_bucket_view %}
+          <div class="legend-row">
+            <span class="legend-swatch" style="background:{{ b.color }};"></span>
+            <span class="legend-label">{{ b.label }}</span>
+            <span class="legend-count">{{ b.count }}</span>
+          </div>
+          {% endfor %}
+          <div class="legend-row legend-sep">
+            <span class="legend-swatch" style="background:#c9ced2;"></span>
+            <span class="legend-label">Nunca verificadas</span>
+            <span class="legend-count crit">{{ accounts_analysis.never_verified }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr;">
+      <div class="card">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Cuentas</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="overviewAccountsSearch" class="table-search" placeholder="Buscar por usuario, address, plataforma o safe...">
+            <button id="overviewAccountsExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="overviewAccountsTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Usuario</th>
+                <th data-type="text">Dirección</th>
+                <th data-type="text">Plataforma</th>
+                <th data-type="text">Safe</th>
+                <th data-type="date">Fecha de Creación</th>
+                <th data-type="date">Último Inicio de Sesión</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in accounts_table %}
+              <tr>
+                <td>{{ r.username }}</td>
+                <td>{{ r.address }}</td>
+                <td>{{ r.platform }}</td>
+                <td>{{ r.safe }}</td>
+                <td>{{ r.created }}</td>
+                <td>{{ r.last_logon }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Componentes Core</h2>
+        <div class="kpi-row">
+          {% for c in components_view %}
+          <div class="mini-kpi"><div class="{{ c.value_cls }}">{{ c.value_txt }}</div><div class="label">{{ c.label }}</div></div>
+          {% endfor %}
+          {% if connectors_view %}
+          <div class="mini-kpi"><div class="{{ 'ok' if connectors_ok_count == connectors_view | length else 'crit' }}">{{ connectors_ok_count }}/{{ connectors_view | length }}</div><div class="label">Connector Management</div></div>
+          {% endif %}
+          {% if sia_connectors_view %}
+          <div class="mini-kpi"><div class="{{ 'ok' if sia_connectors_ok_count == sia_connectors_view | length else 'crit' }}">{{ sia_connectors_ok_count }}/{{ sia_connectors_view | length }}</div><div class="label">SIA Connectors</div></div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if licenses_view %}
+      <div class="card">
+        <h2>Licencias</h2>
+        <div class="table-scroll">
+          <table>
+            <tr><th>Tipo</th><th>%</th></tr>
+            {% for row in licenses_view %}
+            <tr>
+              <td>{{ row.name }}</td>
+              <td>
+                <div class="bar-bg"><div class="bar-fill" style="width:{{ row.pct }}%; background:{{ row.bar_color }};"></div></div>
+                {{ row.pct }}%
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if infra_servers_view %}
+      <div class="card">
+        <h2>Infraestructura</h2>
+        <div class="kpi-row">
+          <div class="kpi"><div class="value">{{ infra_servers_view | length }}</div><div class="label">Servidores</div></div>
+          <div class="kpi"><div class="value {{ 'crit' if services_stopped else 'ok' }}">{{ services_stopped }}</div><div class="label">Servicios detenidos</div></div>
+          <div class="kpi"><div class="value {{ 'crit' if certs_expiring else 'ok' }}">{{ certs_expiring }}</div><div class="label">Certificados por vencer</div></div>
+        </div>
+      </div>
+      {% endif %}
+    </div>

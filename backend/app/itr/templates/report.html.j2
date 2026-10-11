@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ report_title }} - {{ client_name }}</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+{% include "partials/_styles.html.j2" %}
+</style>
+</head>
+<body>
+
+{% include "partials/_header.html.j2" %}
+
+<main>
+
+  {% if data_warnings %}
+  <div class="data-warnings" role="alert">
+    <strong>Datos incompletos en este reporte:</strong>
+    <ul>
+      {% for w in data_warnings %}<li>{{ w }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <section id="overview" class="tabpanel{{ ' active' if first_visible_tab_id == 'overview' else '' }}">
+{% include "partials/_tab_overview.html.j2" %}
+  </section>
+
+  <!-- ===================== SESIONES ===================== -->
+  <section id="sessions" class="tabpanel{{ ' active' if first_visible_tab_id == 'sessions' else '' }}">
+{% include "partials/_tab_sessions.html.j2" %}
+  </section>
+
+  <!-- ===================== COMPONENTS ===================== -->
+  <section id="components" class="tabpanel{{ ' active' if first_visible_tab_id == 'components' else '' }}">
+{% include "partials/_tab_components.html.j2" %}
+  </section>
+
+  <!-- ===================== USERS ===================== -->
+  <section id="users" class="tabpanel{{ ' active' if first_visible_tab_id == 'users' else '' }}">
+{% include "partials/_tab_users.html.j2" %}
+  </section>
+
+  <!-- ===================== SAFES ===================== -->
+  <section id="safes" class="tabpanel{{ ' active' if first_visible_tab_id == 'safes' else '' }}">
+{% include "partials/_tab_safes.html.j2" %}
+  </section>
+
+  <!-- ===================== PLATFORMS ===================== -->
+  <section id="platforms" class="tabpanel{{ ' active' if first_visible_tab_id == 'platforms' else '' }}">
+{% include "partials/_tab_platforms.html.j2" %}
+  </section>
+
+  <!-- ===================== ACCOUNTS ===================== -->
+  <section id="accounts" class="tabpanel{{ ' active' if first_visible_tab_id == 'accounts' else '' }}">
+{% include "partials/_tab_accounts.html.j2" %}
+  </section>
+
+  <!-- ===================== KPI's ===================== -->
+  <section id="kpis" class="tabpanel{{ ' active' if first_visible_tab_id == 'kpis' else '' }}">
+{% include "partials/_tab_kpis.html.j2" %}
+  </section>
+
+  <!-- ===================== FINDINGS ===================== -->
+  <section id="findings" class="tabpanel{{ ' active' if first_visible_tab_id == 'findings' else '' }}">
+{% include "partials/_tab_findings.html.j2" %}
+  </section>
+
+  <!-- ===================== INFRAESTRUCTURA ===================== -->
+  <section id="infra" class="tabpanel{{ ' active' if first_visible_tab_id == 'infra' else '' }}">
+{% include "partials/_tab_infra.html.j2" %}
+  </section>
+
+</main>
+
+<footer>
+  <div class="footer-left">
+    <span class="footer-title">{{ report_title }} ({{ report_acronym }}) &middot; {{ client_name }}</span>
+    <span class="footer-subtitle">Generado con PAM Web Console</span>
+  </div>
+  {% if brand_footer_logo_uri %}<img src="{{ brand_footer_logo_uri }}" alt="" class="footer-logo">{% endif %}
+</footer>
+
+<script>
+{% include "partials/_scripts.html.j2" %}
+</script>
+
+</body>
+</html>

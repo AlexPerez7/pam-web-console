@@ -1,0 +1,36 @@
+{# Override de header de ejemplo (tenant `acme`) (ver "Layout personalizado por cliente" en
+   clientes/README.md). Igual al templates/partials/_header.html.j2 base, salvo
+   el bloque <style> de abajo: el logo de este cliente ya trae su propio fondo
+   sólido, así que la placa blanca (.client-logo { background:white; padding })
+   del estilo base se veía como un borde blanco raro alrededor del logo. Acá se
+   saca esa placa y se agranda un poco el logo. #}
+<style>
+  .client-logo { background: transparent; padding: 0; height: 52px; border-radius: 3px; }
+  @media (max-width: 640px) { .client-logo { height: 34px; padding: 0; } }
+</style>
+<header>
+  <input type="checkbox" id="nav-toggle" class="nav-toggle-checkbox">
+  <div class="header-top">
+    <div class="header-brand">
+      {% if brand_logo_uri %}<img src="{{ brand_logo_uri }}" alt="" class="brand-logo">{% endif %}
+      <div>
+        <h1>{{ report_title }} <span class="title-acronym">({{ report_acronym }})</span></h1>
+        <div class="sub">{{ client_name }} &nbsp;|&nbsp; Entorno: {{ environment_name }} &nbsp;|&nbsp; Generado: {{ generated_on }}</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      {% if client_logo_uri %}<img src="{{ client_logo_uri }}" alt="{{ client_name }}" class="client-logo">{% endif %}
+      <button type="button" class="btn-pdf" onclick="window.print()">Exportar PDF</button>
+      <label for="nav-toggle" class="nav-toggle-btn" aria-label="Abrir menú de navegación">
+        <span class="nav-toggle-icon"></span>
+      </label>
+    </div>
+  </div>
+  <nav class="tabs">
+    {% for tab_id, tab_label in tab_order %}
+    {% if tab_id not in excluded_tabs %}
+    <label for="nav-toggle" class="tab-btn-wrap"><button class="tab-btn{{ ' active' if tab_id == first_visible_tab_id else '' }}" data-tab="{{ tab_id }}">{{ tab_label }}{% if tab_id == 'findings' and findings_crit %} <span class="tab-badge">{{ findings_crit }}</span>{% endif %}</button></label>
+    {% endif %}
+    {% endfor %}
+  </nav>
+</header>

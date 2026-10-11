@@ -1,0 +1,70 @@
+# ─── Secretos / config real ──────────────────────────────────────────────
+# PAM Web Console NUNCA guarda credenciales de tenants en el repo. El secret store real
+# (secrets/secrets.age + secrets/age.key) se genera en el server.
+.env
+.env.*
+!.env.example
+*.pem
+*.crt
+*.key
+*.pfx
+config.local.*
+secrets/*
+!secrets/.gitkeep
+!secrets/README.md
+!secrets/secrets.example.json
+tls/*
+!tls/.gitkeep
+!tls/README.md
+
+# ─── Python (backend) ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# ─── Node / frontend ─────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# ─── Infra ───────────────────────────────────────────────────────────────
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!*.tfvars.example
+
+# ─── IDE / SO ────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# ─── Claude Code (runtime local, no el proyecto) ─────────────────────────
+# `.claude/skills/*` son symlinks a `.agents/skills/` (la fuente real,
+# formato "universal" de `npx skills`, SÍ se commitea) generados por
+# `npx skills add` — regenerables, y los symlinks no son portables entre
+# máquinas. `.claude/scheduled_tasks.lock` es estado de sesión.
+# Excepción: `.claude/settings.json` (hook de rtk, ver `RTK.md`) sí se commitea.
+.claude/*
+!.claude/settings.json
+
+# ─── Datos locales / dumps ───────────────────────────────────────────────
+*.sqlite
+*.db
+dumps/
+*.log

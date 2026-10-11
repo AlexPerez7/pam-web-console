@@ -1,0 +1,179 @@
+    <div class="grid" style="grid-template-columns: 1fr;">
+      <div class="card kpi-hero-row" style="padding: 0;">
+        <div class="kpi-hero">
+          <div class="value ok">{{ account_activity.used_pct }}%</div>
+          <div class="label">Con uso ({{ account_activity.window_days }}d)</div>
+          <div class="delta {{ 'crit' if account_activity.unused else '' }}">{{ account_activity.unused }} sin uso</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value">{{ concurrent_sessions.max_concurrent }}</div>
+          <div class="label">Pico concurrente</div>
+          <div class="delta">{{ concurrent_sessions.max_concurrent_at or '-' }}</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'warn' if concurrent_sessions.off_hours_pct >= 30 else 'ok' }}">{{ concurrent_sessions.off_hours_pct }}%</div>
+          <div class="label">Fuera de horario</div>
+          <div class="delta">{{ concurrent_sessions.off_hours_count }} sesiones</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value">{{ concurrent_sessions.avg_duration_minutes }}m</div>
+          <div class="label">Duración promedio</div>
+          <div class="delta">Mediana {{ concurrent_sessions.median_duration_minutes }}m</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'warn' if concurrent_sessions.long_session_count else 'ok' }}">{{ concurrent_sessions.long_session_count }}</div>
+          <div class="label">Sesiones &gt;= {{ concurrent_sessions.long_session_hours }}h</div>
+          <div class="delta">Ver detalle abajo</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="section-label">Actividad</div>
+
+      <div class="card">
+        <h2>Con uso vs. sin uso</h2>
+        <canvas id="activityUsedChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Distribución por cantidad de sesiones</h2>
+        <canvas id="activityBucketChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Top 15 cuentas más activas</h2>
+        <canvas id="activityTopChart"></canvas>
+      </div>
+
+      <div class="section-label">Concurrencia y patrones</div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <h2>Pico de sesiones concurrentes por día</h2>
+        <canvas id="concurrentSessionsChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Distribución de inicios de sesión por hora del día (UTC)</h2>
+        <canvas id="sessionsByHourChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Pico de concurrencia por servidor PSM</h2>
+        <div class="table-scroll">
+          <table>
+            <tr><th>Servidor</th><th>Pico concurrente</th><th>Sesiones</th></tr>
+            {% for s in concurrent_sessions.by_server %}
+            <tr>
+              <td>{{ s.server }}</td>
+              <td>{{ s.max_concurrent }}</td>
+              <td>{{ s.sessions_counted }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="muted">Sin datos.</td></tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="section-label">Detalle de sesiones</div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Sesiones fuera de horario laboral</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="offHoursSearch" class="table-search" placeholder="Buscar por usuario, cuenta, address o servidor...">
+            <button id="offHoursExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <p class="muted">Los indicadores resumen (% fuera de horario, pico concurrente, duración promedio) están en la pestaña {% if 'kpis' not in excluded_tabs %}<a href="#kpis" class="tab-link" data-jump-target="kpis">KPI's</a>{% else %}KPI's{% endif %}.</p>
+        <div class="table-scroll">
+          <table id="offHoursTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="date">Inicio</th>
+                <th data-type="text">Día</th>
+                <th data-type="text">Usuario</th>
+                <th data-type="text">Cuenta</th>
+                <th data-type="text">Dirección</th>
+                <th data-type="text">Servidor</th>
+                <th data-type="text">Duración</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in concurrent_sessions.off_hours_sessions %}
+              <tr>
+                <td>{{ s.start_txt }}</td>
+                <td>{{ s.weekday }}</td>
+                <td>{{ s.user }}</td>
+                <td>{{ s.account_name }}</td>
+                <td>{{ s.address }}</td>
+                <td>{{ s.server }}</td>
+                <td>{{ s.duration_txt }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="7" class="muted">Sin sesiones fuera de horario en la ventana.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {% if concurrent_sessions.long_sessions %}
+      <div class="card" style="grid-column: 1 / -1;">
+        <h2>Sesiones más largas (&gt;= {{ concurrent_sessions.long_session_hours }}h)</h2>
+        <div class="table-scroll">
+          <table>
+            <tr><th>Cuenta</th><th>Usuario</th><th>Servidor</th><th>Inicio</th><th>Duración</th></tr>
+            {% for s in concurrent_sessions.long_sessions %}
+            <tr>
+              <td>{{ s.account_name }}</td>
+              <td>{{ s.user }}</td>
+              <td>{{ s.server }}</td>
+              <td>{{ s.start_txt }}</td>
+              <td class="warn">{{ s.duration_txt }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Actividad por cuenta</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="activitySearch" class="table-search" placeholder="Buscar por cuenta, safe, address o usuario...">
+            <button id="activityExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="activityTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Cuenta</th>
+                <th data-type="text">Safe</th>
+                <th data-type="text">Dirección</th>
+                <th data-type="text">Usuario</th>
+                <th data-type="text">Plataforma</th>
+                <th data-type="num">Sesiones ({{ account_activity.window_days }}d)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in activity_view %}
+              <tr>
+                <td>{{ r.account_name }}</td>
+                <td>{{ r.safe_name }}</td>
+                <td>{{ r.address }}</td>
+                <td>{{ r.user_name }}</td>
+                <td>{{ r.platform_id }}</td>
+                <td class="{{ r.sessions_cls }}">{{ r.sessions_txt }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>

@@ -1,0 +1,36 @@
+# Config de tooling del backend que no cabe en ruff.toml.
+# ruff (lint + format) sigue en backend/ruff.toml — no se mueve.
+
+[tool.mypy]
+python_version = "3.12"
+files = ["app"]
+exclude = ['^alembic/']
+plugins = ["pydantic.mypy"]
+
+# Pragmatico: nada de --strict todavia. Se sube el rigor por modulo.
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+no_implicit_optional = true
+
+# app/itr/{analysis,report_builder}.py son un port CASI VERBATIM de
+# Telemetry-Reporter (ITR, ver docs/specs/itr-report.md) — código sin
+# type hints por diseño (igual que el original), donde `check_untyped_defs`
+# genera ruido (`var-annotated`/`union-attr` sobre variables cuyo tipo real
+# ya es correcto en runtime). Mismo criterio que vendorizar
+# `backend/tools/scpr_decode/` byte-idéntico: no se reescribe código
+# vendorizado para subir su rigor, se lo excluye a propósito.
+[[tool.mypy.overrides]]
+module = "app.itr.*"
+ignore_errors = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra -q"
+markers = [
+  "contract: prueba contra un tenant real de CyberArk (skip salvo credenciales de lab)",
+]

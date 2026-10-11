@@ -1,0 +1,48 @@
+    <div class="grid">
+      <div class="card" style="grid-column: 1 / -1;">
+        <h2>Resumen</h2>
+        <div class="kpi-row finding-chips">
+          <button type="button" class="kpi finding-chip active" data-filter-severity="">
+            <div class="value">{{ findings_crit + findings_warn + findings_info }}</div><div class="label">Hallazgos totales</div>
+          </button>
+          <button type="button" class="kpi finding-chip" data-filter-severity="crit">
+            <div class="value {{ 'crit' if findings_crit else 'ok' }}">{{ findings_crit }}</div><div class="label">Críticos</div>
+          </button>
+          <button type="button" class="kpi finding-chip" data-filter-severity="warn">
+            <div class="value {{ 'warn' if findings_warn else 'ok' }}">{{ findings_warn }}</div><div class="label">A revisar</div>
+          </button>
+          <button type="button" class="kpi finding-chip" data-filter-severity="info">
+            <div class="value">{{ findings_info }}</div><div class="label">Informativos</div>
+          </button>
+        </div>
+        <p class="muted" style="font-size: 12px; margin: 10px 0 0 0;">Clic en un chip para filtrar la lista por severidad; clic de nuevo para quitar el filtro.</p>
+      </div>
+
+      <div style="grid-column: 1 / -1;">
+        {% for group in findings_grouped %}
+        <details class="finding-category" {{ 'open' if group.has_crit else '' }}>
+          <summary class="finding-category-summary">
+            <span class="finding-category-icon">{{ group.icon }}</span>
+            <span class="finding-category-title">{{ group.category }}</span>
+            <span class="finding-category-count">{{ group.entries|length }}</span>
+          </summary>
+          <div class="finding-category-body">
+            {% for f in group.entries %}
+            <div class="finding-card sev-{{ f.severity_css }}" data-severity="{{ f.severity_css }}">
+              <span class="severity-badge badge-{{ f.severity_css }}">{{ f.severity_badge_label }}</span>
+              {% set headline = f.text | finding_headline %}
+              {% if headline %}<div class="finding-headline">{{ headline }}</div>{% endif %}
+              <p class="finding-text">{{ f.text }}</p>
+              {% if f.tip %}
+              <div class="finding-recommendation">
+                <span class="finding-recommendation-icon">&#128161;</span>
+                <span>{{ f.tip }}</span>
+              </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </details>
+        {% endfor %}
+      </div>
+    </div>

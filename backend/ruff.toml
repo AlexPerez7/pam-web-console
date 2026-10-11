@@ -1,0 +1,22 @@
+# Lint/format del backend. Objetivo: rápido y sin ruido.
+target-version = "py312"
+line-length = 100
+
+[lint]
+# S = flake8-bandit (SAST-lite), RUF = reglas propias de ruff.
+select = ["E", "F", "I", "UP", "B", "C4", "SIM", "S", "RUF"]
+ignore = [
+  "E501",   # largo de línea: lo maneja el formatter, no molestar en lint
+  "B008",   # Depends() en defaults de FastAPI es idiomático
+  "B904",   # raise ... from: los re-raise son traducciones deliberadas
+  "SIM108", # ternario vs if/else: no siempre más legible
+  "UP042",  # str+Enum es deliberado (StrEnum cambia la serialización)
+]
+
+[lint.per-file-ignores]
+"alembic/versions/*" = ["E402", "F401", "UP007", "UP035", "UP045"]
+# tests: asserts y "contraseñas" de fixtures obviamente falsas
+"tests/*" = ["S101", "S105", "S106"]
+
+[format]
+quote-style = "double"

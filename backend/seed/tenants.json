@@ -1,0 +1,69 @@
+[
+  {
+    "id": "globex",
+    "name": "Globex",
+    "client": "Globex",
+    "deployment": "privilege_cloud",
+    "pvwa_url": "https://globex.privilegecloud.cyberark.cloud",
+    "identity_tenant_url": "https://aaa1001.my.idaptive.app",
+    "connector_management_url": "https://globex.connectormanagement.cyberark.cloud",
+    "sia_connector_url": "https://globex.dpa.cyberark.cloud",
+    "alero_tenant_id": "00000000000000000000000000000001",
+    "secret_ref": "globex",
+    "verify_ssl": true,
+    "enabled": true
+  },
+  {
+    "id": "acme",
+    "name": "Acme",
+    "client": "Acme",
+    "deployment": "privilege_cloud",
+    "pvwa_url": "https://acme.privilegecloud.cyberark.cloud",
+    "identity_tenant_url": "https://aad1004.id.cyberark.cloud",
+    "connector_management_url": "https://acme.connectormanagement.cyberark.cloud",
+    "sia_connector_url": "https://acme.dpa.cyberark.cloud",
+    "secret_ref": "acme",
+    "verify_ssl": true,
+    "enabled": true
+  },
+  {
+    "id": "umbrella",
+    "name": "Umbrella",
+    "client": "Umbrella",
+    "deployment": "privilege_cloud",
+    "pvwa_url": "https://umbrella.privilegecloud.cyberark.cloud",
+    "identity_tenant_url": "https://aab1002.my.idaptive.app",
+    "connector_management_url": "https://umbrella.connectormanagement.cyberark.cloud",
+    "sia_connector_url": "https://umbrella.dpa.cyberark.cloud",
+    "secret_ref": "umbrella",
+    "verify_ssl": true,
+    "enabled": true
+  },
+  {
+    "id": "lab",
+    "name": "Laboratorio (lab)",
+    "client": "Tenant de laboratorio del equipo PAM",
+    "deployment": "privilege_cloud",
+    "pvwa_url": "https://pamlab.privilegecloud.cyberark.cloud",
+    "identity_tenant_url": "https://aac1003.id.cyberark.cloud",
+    "connector_management_url": "https://pamlab.connectormanagement.cyberark.cloud",
+    "sia_connector_url": "https://pamlab.dpa.cyberark.cloud",
+    "alero_tenant_id": "00000000000000000000000000000002",
+    "secret_ref": "lab",
+    "verify_ssl": true,
+    "enabled": true
+  },
+  {
+    "id": "initech",
+    "name": "Initech",
+    "client": "Initech",
+    "deployment": "privilege_cloud",
+    "pvwa_url": "https://initech.privilegecloud.cyberark.cloud",
+    "identity_tenant_url": "https://aae1005.id.cyberark.cloud",
+    "connector_management_url": "https://initech.connectormanagement.cyberark.cloud",
+    "sia_connector_url": "https://initech.dpa.cyberark.cloud",
+    "secret_ref": "initech",
+    "verify_ssl": true,
+    "enabled": true
+  }
+]

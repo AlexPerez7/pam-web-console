@@ -1,0 +1,163 @@
+    <div class="grid" style="grid-template-columns: 1fr;">
+      <div class="card kpi-hero-row" style="padding: 0;">
+        {% if is_cloud %}
+        <div class="kpi-hero">
+          <div class="value">{{ licenses_total_capacity }}</div>
+          <div class="label">Licencias contratadas</div>
+          <div class="delta">{{ licenses_capacity_subtitle }}</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ licenses_avg_pct_cls }}">{{ licenses_avg_pct }}%</div>
+          <div class="label">% uso promedio</div>
+          <div class="delta">{{ licenses_avg_pct_subtitle }}</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value">{{ license_users_candidates }}</div>
+          <div class="label">Candidatos a liberar</div>
+          <div class="delta {{ 'warn' if license_users_candidates else '' }}">{{ license_users_candidates_pct }}% de Standard/External</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value">{{ license_users_total }}</div>
+          <div class="label">Usuarios Standard/External</div>
+          <div class="delta">Total con licencia consumida</div>
+        </div>
+        {% else %}
+        <div class="kpi-hero">
+          <div class="value">{{ users_real_total }}</div>
+          <div class="label">Usuarios</div>
+          <div class="delta">Sin cuentas de sistema ni componentes</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value ok">{{ users_enabled }}</div>
+          <div class="label">Habilitados</div>
+          <div class="delta">{{ users_suspended }} suspendidos &middot; {{ users_disabled }} deshabilitados</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'warn' if users_never_login else 'ok' }}">{{ users_never_login }}</div>
+          <div class="label">Nunca iniciaron sesión</div>
+          <div class="delta {{ 'warn' if users_never_login else '' }}">De {{ users_real_total }} usuarios</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="value {{ 'warn' if (users_never_login + users_stale) else 'ok' }}">{{ users_never_login + users_stale }}</div>
+          <div class="label">Inactivos (&ge; {{ inactive_login_days }} días)</div>
+          <div class="delta {{ 'warn' if (users_never_login + users_stale) else '' }}">{{ users_inactive_pct }}% del total</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="section-label">{{ 'Licencias' if is_cloud else 'Actividad de usuarios' }}</div>
+
+      {% if is_cloud %}
+      <div class="card" style="grid-column: 1 / -1;" id="licenseStatsCard">
+        <h2>Estadísticas de Usuarios (licencias)</h2>
+        {% for row in licenses_view %}
+        <div class="component-bar-row">
+          <div class="component-bar-label">{{ row.name }}</div>
+          <div class="component-bar-track">
+            <div class="bar-bg"><div class="bar-fill" style="width:{{ row.pct }}%; background:{{ row.bar_color }};"></div></div>
+          </div>
+          <div class="component-bar-count">{{ row.used }} / {{ row.total }} &middot; {{ row.pct }}%</div>
+        </div>
+        {% else %}
+        <p class="muted">Sin licencias configuradas.</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="card">
+        <h2>Usuarios por Tipo</h2>
+        <canvas id="usersByTypeChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Usuarios por Último Inicio de Sesión</h2>
+        <canvas id="usersLastLogonChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="section-label">Detalle</div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">{{ 'Candidatos a liberar licencia (Standard/External)' if is_cloud else 'Usuarios inactivos' }}</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="licenseUsersSearch" class="table-search" placeholder="Buscar por usuario...">
+            <button id="licenseUsersExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <p class="muted">{% if is_cloud %}Candidato = nunca se logueó o &gt;= {{ inactive_login_days }} días sin loguearse.{% else %}Usuarios (sin cuentas de sistema: componentes, predefinidos de CyberArk, ni el usuario del reporte) que nunca iniciaron sesión o llevan &gt;= {{ inactive_login_days }} días sin hacerlo.{% endif %}</p>
+        <div class="table-scroll">
+          <table id="licenseUsersTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Usuario</th>
+                <th data-type="text">Tipo{{ ' (licencia)' if is_cloud else ' de Usuario' }}</th>
+                <th data-type="text">Estado</th>
+                <th data-type="text">Origen</th>
+                <th data-type="date">Último Login</th>
+                <th data-type="num">Días sin loguearse</th>
+                <th data-type="text">{{ 'Candidato a liberar' if is_cloud else 'Inactivo' }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in license_users_view %}
+              <tr>
+                <td>{{ r.username }}</td>
+                <td>{{ r.user_type_label }}</td>
+                <td>{{ r.status }}</td>
+                <td>{{ r.source }}</td>
+                <td>{{ r.last_login }}</td>
+                <td class="{{ r.login_cls }}">{{ r.days_since_login_txt }}</td>
+                <td class="{{ r.login_cls }}">{{ r.is_candidate | si_no }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="7" class="muted">{{ 'No hay usuarios de tipo Privileged Standard/External User.' if is_cloud else 'No hay usuarios inactivos.' }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="table-toolbar">
+          <h2 style="border:none; margin:0; padding:0;">Detalle de Usuarios</h2>
+          <div class="table-toolbar-actions">
+            <input type="text" id="usersSearch" class="table-search" placeholder="Buscar por usuario...">
+            <button id="usersExportBtn" class="btn-export">Exportar a CSV</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="usersTable" class="sortable">
+            <thead>
+              <tr>
+                <th data-type="text">Usuario</th>
+                <th data-type="text">Tipo de Usuario</th>
+                <th data-type="text">Origen</th>
+                <th data-type="text">Estado</th>
+{% if is_cloud %}                <th data-type="text">En Vault</th>
+{% endif %}                <th data-type="num">Membresías de Grupo</th>
+                <th data-type="num">Propiedad Directa de Safe</th>
+                <th data-type="date">Último Login</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in users_analysis.rows %}
+              <tr>
+                <td>{{ r.username }}</td>
+                <td>{{ r.user_type }}</td>
+                <td>{{ r.source }}</td>
+                <td>{{ r.status }}</td>
+{% if is_cloud %}                <td>{{ r.in_vault | si_no }}</td>
+{% endif %}                <td>{{ r.group_count }}</td>
+                <td>{{ r.direct_safe_ownership }}</td>
+                <td>{{ r.last_login }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>

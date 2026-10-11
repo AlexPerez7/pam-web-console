@@ -1,0 +1,18 @@
+**/__pycache__
+**/*.pyc
+.venv
+venv
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.git
+tests
+*.md
+# datos sensibles: nunca en el contexto de build
+.env
+.env.*
+secrets/
+tls/
+*.pem
+*.key
+*.crt

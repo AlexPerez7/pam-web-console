@@ -27,11 +27,13 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      - name: dependencias del backend
+        working-directory: backend
+        run: pip install -r requirements.txt -r requirements-dev.txt
       - name: datos de la demo (backend en modo demo)
         working-directory: backend
-        run: |
-          pip install -r requirements.txt -r requirements-dev.txt
-          python tools/export_demo_site.py ../frontend/public/demo-data
+        timeout-minutes: 5
+        run: python -u tools/export_demo_site.py ../frontend/public/demo-data
       - uses: actions/setup-node@v7
         with:
           node-version: "20"

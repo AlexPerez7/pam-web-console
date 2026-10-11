@@ -35,6 +35,9 @@ os.environ.update(
         "PAM_READ_RATE_GLOBAL_MAX_PER_WINDOW": "10000000",
         "PAM_WRITE_MAX_PER_WINDOW": "10000000",
         "PAM_LOG_LEVEL": "ERROR",
+        # sin Redis: puerto local cerrado, la conexión falla al instante (un
+        # host inexistente puede colgarse esperando el DNS)
+        "PAM_REDIS_URL": "redis://127.0.0.1:1/0",
     }
 )
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))

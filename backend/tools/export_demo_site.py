@@ -47,6 +47,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.pool import StaticPool
 
+from app.api import reports as reports_api
 from app.core import cache
 from app.core.deps import current_operator
 from app.core.seed import seed_tenants
@@ -83,6 +84,14 @@ async def _delete(key: str) -> None:
     _mem.pop(key, None)
 
 
+async def _no_arq() -> None:
+    # los reportes pesados se encolan como job ARQ (Redis): sin Redis, el
+    # pool reintentaría la conexión en cada uno. Fallan al toque y quedan
+    # fuera de la demo estática.
+    raise ConnectionError("sin Redis en la exportación de la demo")
+
+
+reports_api.get_arq_pool = _no_arq  # type: ignore[assignment]
 cache.get_json = _get_json  # type: ignore[assignment]
 cache.set_json = _set_json  # type: ignore[assignment]
 cache.get_int = _get_int  # type: ignore[assignment]

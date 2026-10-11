@@ -344,3 +344,8 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    # El TestClient y el engine async dejan hilos vivos que impiden que el
+    # intérprete termine (el proceso queda colgado tras escribir los
+    # archivos). Todo ya está en disco: salir sin esperarlos.
+    sys.stdout.flush()
+    os._exit(0)

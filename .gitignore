@@ -68,3 +68,6 @@ Thumbs.db
 *.db
 dumps/
 *.log
+
+# datos generados de la demo estática (los arma el workflow de Pages)
+frontend/public/demo-data/

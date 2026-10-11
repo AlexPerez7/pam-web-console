@@ -27,10 +27,17 @@ const qc = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 30_000 } },
 });
 
+// Demo estática (GitHub Pages, `VITE_DEMO=true`): la API se responde en el
+// navegador con datos ficticios antes de montar la app (src/demo/).
+if (import.meta.env.VITE_DEMO === "true") {
+  const { installMockApi } = await import("./demo/mockApi");
+  installMockApi();
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={qc}>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <AuthProvider>
           <App />
           <Toaster />

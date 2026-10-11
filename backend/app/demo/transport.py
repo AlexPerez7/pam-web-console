@@ -249,7 +249,7 @@ def _account_cpm(d: TenantData, req: httpx.Request, m: re.Match[str]) -> httpx.R
     if acc is None:
         return not_found()
     acc["secretManagement"]["status"] = "inProcess"
-    return ok(None)
+    return ok({})
 
 
 @route("POST", r"/API/Accounts/(?P<id>[^/]+)/Password/Retrieve")

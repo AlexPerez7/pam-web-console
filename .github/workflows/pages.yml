@@ -1,0 +1,62 @@
+name: Demo (GitHub Pages)
+
+# Publica la demo estática: el frontend real, compilado con VITE_DEMO=true,
+# respondiendo la API con datos ficticios generados por el backend en modo
+# demo (backend/tools/export_demo_site.py). Se regenera en cada push, así las
+# fechas de la demo siempre son recientes.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: datos de la demo (backend en modo demo)
+        working-directory: backend
+        run: |
+          pip install -r requirements.txt -r requirements-dev.txt
+          python tools/export_demo_site.py ../frontend/public/demo-data
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: build del frontend en modo demo
+        working-directory: frontend
+        env:
+          VITE_DEMO: "true"
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: |
+          npm ci
+          npm run build
+          # SPA: GitHub Pages sirve 404.html en rutas profundas (/accounts, ...)
+          cp dist/index.html dist/404.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

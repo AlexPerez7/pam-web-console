@@ -745,6 +745,20 @@ export function Shell({ children }: { children: ReactNode }) {
       <Sidebar spaces={spaces} active={space} activeItem={item} collapsed={collapsed} onToggle={toggle} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar spaces={spaces} active={space} activeItem={item} title={title} />
+        {import.meta.env.VITE_DEMO === "true" && (
+          <div role="note" className="border-b border-border bg-sky-50 px-6 py-2 text-xs text-navy-900">
+            <strong>Demo con datos ficticios.</strong> Tenants, cuentas y usuarios son inventados y
+            esta página es de solo lectura.{" "}
+            <a
+              className="font-semibold underline"
+              href="https://github.com/AlexPerez7/pam-web-console"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Ver el código en GitHub
+            </a>
+          </div>
+        )}
         <main id="contenido" tabIndex={-1} className="flex-1 bg-background p-6 outline-none">
           <Suspense
             fallback={

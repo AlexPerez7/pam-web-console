@@ -81,6 +81,13 @@ cliente de CyberArk y la fuente de las credenciales.
 - Tests: `tests/unit/test_demo_mode.py`.
 - `manage.py demo-setup` carga los tenants del seed y crea el primer
   operador.
+- **Demo estática en GitHub Pages** (`.github/workflows/pages.yml`):
+  `backend/tools/export_demo_site.py` levanta la API en proceso en modo
+  demo y guarda sus respuestas GET en `frontend/public/demo-data/*.json`
+  (ignorado por git); el frontend compilado con `VITE_DEMO=true` y
+  `VITE_BASE=/pam-web-console/` las sirve desde `src/demo/mockApi.ts`
+  (paginación/búsqueda en el navegador, escrituras → 403 de solo lectura).
+  Un endpoint GET nuevo que el frontend use debe sumarse al exportador.
 
 ## Comandos
 

@@ -47,7 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       clearToken();
       setOperator(null);
-      location.assign(reason ? `/login?motivo=${encodeURIComponent(reason)}` : "/login");
+      const login = `${import.meta.env.BASE_URL}login`;
+      location.assign(reason ? `${login}?motivo=${encodeURIComponent(reason)}` : login);
     },
     refresh: async () => {
       const op = await api<Operator>("/auth/me");

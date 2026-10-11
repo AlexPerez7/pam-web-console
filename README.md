@@ -12,7 +12,7 @@ acción.
 | **Alcance** | CyberArk Privilege Cloud / ISPSS |
 | **Stack** | Python 3.12 · FastAPI · SQLAlchemy 2 · PostgreSQL · Redis/ARQ · React 18 · TypeScript · Tailwind v4 · shadcn/ui |
 | **Despliegue** | Docker Compose on-prem, sin dependencias de nube |
-| **Demo** | Modo demo integrado con 5 tenants ficticios: [probarlo](#probar-la-demo) |
+| **Demo en vivo** | **[alexperez7.github.io/pam-web-console](https://alexperez7.github.io/pam-web-console/)** (datos ficticios, solo lectura) |
 
 > Proyecto real, desarrollado y usado en producción por el equipo PAM de un
 > MSP. Esta es la versión pública: los datos de clientes, la
@@ -82,6 +82,18 @@ gira alrededor de contener ese radio de impacto (ver
 
 ## Probar la demo
 
+### En el navegador (sin instalar nada)
+
+**[alexperez7.github.io/pam-web-console](https://alexperez7.github.io/pam-web-console/)**
+es el frontend real compilado en modo demo: responde la API desde
+respuestas reales del backend generadas con datos ficticios
+(`backend/tools/export_demo_site.py`, se regenera en cada push con
+`.github/workflows/pages.yml`). Se puede recorrer todo —inventario,
+dashboards, System Health, búsqueda cross-tenant, reportes, auditoría— pero
+es de solo lectura: las escrituras responden un aviso.
+
+### Completa, con Docker
+
 Con `PAM_DEMO_MODE=true` la consola corre completa —RBAC, audit log,
 dry-run, aprobaciones, jobs, reportes— pero la API de CyberArk la responde
 un **mock en proceso** (`backend/app/demo/`) con 5 tenants ficticios
@@ -92,7 +104,7 @@ secret store. Las escrituras se aplican sobre un estado en memoria.
 Requisitos: Docker con Compose.
 
 ```bash
-git clone https://github.com/<usuario>/pam-web-console.git
+git clone https://github.com/AlexPerez7/pam-web-console.git
 cd pam-web-console
 cp .env.example .env
 # en .env: PAM_DEMO_MODE=true, POSTGRES_PASSWORD y

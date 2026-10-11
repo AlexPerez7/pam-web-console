@@ -84,7 +84,8 @@ export function tryRefresh(): Promise<boolean> {
 
 function goToLogin() {
   clearToken();
-  if (location.pathname !== "/login") location.assign("/login");
+  const login = `${import.meta.env.BASE_URL}login`;
+  if (location.pathname !== login) location.assign(login);
 }
 
 /** Ejecuta `send` con el token actual; ante un 401 renueva y reintenta una

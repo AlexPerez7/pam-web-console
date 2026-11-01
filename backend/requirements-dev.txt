@@ -1,10 +1,10 @@
 # Herramientas de dev / CI (no van en la imagen).
 # El CI instala tambien requirements.txt (mypy necesita los tipos reales de
 # fastapi/sqlalchemy/pydantic y el plugin pydantic.mypy).
-ruff==0.16.8
-mypy==2.3.1
-pytest==9.1.1
-pytest-asyncio==1.4.0
+ruff==0.17.3
+mypy==2.4.1
+pytest==9.2.0
+pytest-asyncio==1.4.1
 aiosqlite==0.22.1
 freezegun==1.5.5
 pip-audit==2.10.1
